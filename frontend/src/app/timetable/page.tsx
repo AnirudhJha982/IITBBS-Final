@@ -2,21 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { AppShell } from "@/components/shared/AppShell";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { fetchBackend } from "@/lib/api";
-import { useAuth } from "@/lib/auth-context";
-import { PERMISSIONS } from "@/lib/auth";
 import {
   Calendar,
-  CalendarDays,
-  ChevronDown,
-  Sparkles,
-  Download,
   Loader2,
-  CheckCircle2,
+  Table as TableIcon,
+  LayoutGrid,
+  Download,
 } from "lucide-react";
+
+const DAYS = ["MON", "TUE", "WED", "THU", "FRI"];
 
 const DAYS_MAP = [
   { label: "Monday", code: "MON" },
@@ -26,21 +22,27 @@ const DAYS_MAP = [
   { label: "Friday", code: "FRI" },
 ];
 
-const PERIODS = [
-  { num: 1, time: "08:00 - 09:00" },
-  { num: 2, time: "09:00 - 10:00" },
-  { num: 3, time: "10:00 - 11:00" },
-  { num: 4, time: "11:00 - 12:00" },
-  { num: 5, time: "12:00 - 13:00" },
-  { num: 6, time: "14:00 - 15:00" },
-  { num: 7, time: "15:00 - 16:00" },
-  { num: 8, time: "16:00 - 17:00" },
-  { num: 9, time: "17:00 - 18:00" },
-];
+const PERIOD_TIMES: Record<number, { start: string; end: string }> = {
+  1: { start: "08:00", end: "09:00" },
+  2: { start: "09:00", end: "10:00" },
+  3: { start: "10:00", end: "11:00" },
+  4: { start: "11:00", end: "12:00" },
+  5: { start: "12:00", end: "13:00" },
+  6: { start: "14:00", end: "15:00" },
+  7: { start: "15:00", end: "16:00" },
+  8: { start: "16:00", end: "17:00" },
+  9: { start: "17:00", end: "18:00" },
+};
+
+function formatPeriodSlot(start: number, end: number) {
+  const s = PERIOD_TIMES[start]?.start || "08:00";
+  const e = PERIOD_TIMES[end]?.end || "09:00";
+  return `${s} – ${e}`;
+}
 
 const GRID_ROW_HEIGHT = 92;
 const LUNCH_ROW_HEIGHT = 30;
-const TIMELINE_HEIGHT = GRID_ROW_HEIGHT * PERIODS.length + LUNCH_ROW_HEIGHT;
+const TIMELINE_HEIGHT = GRID_ROW_HEIGHT * 9 + LUNCH_ROW_HEIGHT;
 
 const SESSION_COLORS = [
   { card: "border-[#a4d952] bg-[#c5f26c] text-[#344a1d]", label: "bg-white/60 text-[#48622b]" },
@@ -57,33 +59,6 @@ function colorsForCourse(courseId: string) {
     0
   );
   return SESSION_COLORS[hash % SESSION_COLORS.length];
-}
-
-interface Session {
-  session_id: string;
-  day: string;
-  start_period: number;
-  end_period: number;
-  duration: number;
-  room_id: string;
-  room_name: string;
-  building: string;
-  course_id: string;
-  course_title: string;
-  kind: string;
-  groups: string[];
-  faculty_id: string;
-  faculty_name: string;
-  department: string;
-  size: number;
-}
-
-function formatClockTime(value: string) {
-  const [hoursText, minutes] = value.split(":");
-  const hours = Number(hoursText);
-  const suffix = hours >= 12 ? "PM" : "AM";
-  const displayHours = hours % 12 || 12;
-  return `${String(displayHours).padStart(2, "0")}:${minutes} ${suffix}`;
 }
 
 function periodTop(period: number) {
@@ -125,18 +100,36 @@ function layoutDaySessions(items: Session[]) {
   return laidOut;
 }
 
+interface Session {
+  session_id: string;
+  day: string;
+  start_period: number;
+  end_period: number;
+  duration: number;
+  room_id: string;
+  room_name: string;
+  building: string;
+  course_id: string;
+  course_title: string;
+  kind: string;
+  groups: string[];
+  faculty_id: string;
+  faculty_name: string;
+  department: string;
+  size: number;
+}
+
 export default function TimetablePage() {
-  const { role, user } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [filterGroup, setFilterGroup] = useState("");
-  const [filterFaculty, setFilterFaculty] = useState("");
-  const [filterRoom, setFilterRoom] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
-  const [message, setMessage] = useState("");
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
-  const canGenerate = role ? PERMISSIONS.canGenerateTimetable(role) : false;
+  // Filters
+  const [dayFilter, setDayFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+  const [facultyFilter, setFacultyFilter] = useState("");
+  const [roomFilter, setRoomFilter] = useState("");
 
   const loadTimetable = async () => {
     try {
@@ -157,29 +150,6 @@ export default function TimetablePage() {
     loadTimetable();
   }, []);
 
-  const handleGenerate = async () => {
-    try {
-      setGenerating(true);
-      setMessage("Running CP-SAT Solver optimization...");
-      const res = await fetchBackend("/timetable/generate", { method: "POST" });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        setMessage(
-          data.message || "Timetable optimized with 0 hard violations!"
-        );
-        await loadTimetable();
-      } else if (res.status === 403) {
-        setMessage("You do not have permission to generate the timetable.");
-      } else {
-        setMessage(typeof data.message === "string" ? data.message : "The solver did not update the active timetable.");
-      }
-    } catch {
-      setMessage("The solver could not be reached; the active timetable was left unchanged.");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
   const handleDownload = async () => {
     try {
       const res = await fetchBackend("/timetable/export");
@@ -199,7 +169,7 @@ export default function TimetablePage() {
     }
   };
 
-  // Build filter option lists from loaded sessions
+  // Build filter option lists
   const groupsList = Array.from(
     new Set(sessions.flatMap((s) => s.groups ?? []))
   ).sort();
@@ -216,193 +186,308 @@ export default function TimetablePage() {
     new Set(sessions.map((s) => s.room_id))
   ).sort();
 
-  // Apply the chosen filters to the full recurring teaching week.
-  const visibleSessions = sessions.filter((s) => {
-    if (filterGroup && !(s.groups ?? []).includes(filterGroup)) return false;
-    if (filterFaculty && s.faculty_id !== filterFaculty) return false;
-    if (filterRoom && s.room_id !== filterRoom) return false;
-    if (filterCategory && s.kind !== filterCategory) return false;
-    return true;
-  });
+  // Filtered sessions
+  const filtered = sessions
+    .filter((s) => {
+      if (dayFilter && s.day !== dayFilter) return false;
+      if (typeFilter && s.kind !== typeFilter) return false;
+      if (groupFilter && !(s.groups || []).includes(groupFilter)) return false;
+      if (facultyFilter && s.faculty_id !== facultyFilter) return false;
+      if (roomFilter && s.room_id !== roomFilter) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const dayDiff = DAYS.indexOf(a.day) - DAYS.indexOf(b.day);
+      if (dayDiff !== 0) return dayDiff;
+      if (a.start_period !== b.start_period) return a.start_period - b.start_period;
+      return a.session_id.localeCompare(b.session_id);
+    });
+
+  const hasActiveFilters = Boolean(
+    dayFilter || typeFilter || groupFilter || facultyFilter || roomFilter
+  );
+
+  const clearFilters = () => {
+    setDayFilter("");
+    setTypeFilter("");
+    setGroupFilter("");
+    setFacultyFilter("");
+    setRoomFilter("");
+  };
 
   const sessionsByDay = DAYS_MAP.map((day) => ({
     ...day,
-    sessions: visibleSessions.filter((session) => session.day === day.code),
+    sessions: filtered.filter((session) => session.day === day.code),
   }));
-
-  const viewTitle =
-    role === "faculty"
-      ? `My Timetable — ${user?.name ?? ""}`
-      : role === "student_representative"
-      ? `My Class Timetable — ${user?.entityId ?? ""}`
-      : "Weekly Timetable Matrix";
-
-  const viewDescription =
-    role === "faculty"
-      ? `Your personal teaching schedule filtered by faculty ID ${user?.entityId ?? ""}`
-      : role === "student_representative"
-      ? `Schedule for student group ${user?.entityId ?? ""}`
-      : "Comprehensive clash-free master schedule for 14 student cohorts, 40 faculty members, and 27 venues";
 
   return (
     <AppShell>
-      <PageHeader
-        title={viewTitle}
-        description={viewDescription}
-        badge="Zero Conflicts (0 Hard Violations)"
-        actions={
-          <>
-            <Button variant="outline" size="sm" onClick={handleDownload}>
-              <Download className="w-4 h-4 mr-1.5" />
-              Download JSON
-            </Button>
-            {canGenerate && (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={handleGenerate}
-                disabled={generating}
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                    Solving CP-SAT...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-1.5" />
-                    Generate via CP-SAT
-                  </>
-                )}
-              </Button>
-            )}
-          </>
-        }
-      />
+      <Card className="overflow-hidden border-[#e3e8ef] bg-white shadow-[0_14px_40px_rgba(22,28,24,0.08)]">
+        <CardHeader className="flex flex-col gap-4 border-b border-[#e8edf3] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-4">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#18243a]">
+              <Calendar className="h-5 w-5 text-blue-600" />
+              Scheduled Weekly Timetable ({filtered.length} matching)
+            </CardTitle>
 
-      {message && (
-        <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs text-emerald-200">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{message}</span>
-          </div>
-          <button
-            onClick={() => setMessage("")}
-            className="text-slate-400 hover:text-white"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      <Card className="mb-4 overflow-hidden border-[#e7e3dc] bg-[#fbfaf7] text-[#252724] shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eeece6] text-[#55584f]">
-                <CalendarDays className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Recurring teaching week</p>
-                <p className="text-xs text-[#77786f]">Monday – Friday · official weekly schedule</p>
-              </div>
-            </div>
-
-            <label className="relative flex h-9 min-w-[158px] items-center rounded-lg border border-[#dedbd4] bg-white px-3 text-xs text-[#44463f] shadow-sm">
-              <span className="sr-only">Filter by category</span>
-              <select
-                value={filterCategory}
-                onChange={(event) => setFilterCategory(event.target.value)}
-                className="h-full w-full appearance-none bg-transparent pr-5 outline-none"
-              >
-                <option value="">All categories</option>
-                <option value="lecture">Lectures</option>
-                <option value="tutorial">Tutorials</option>
-                <option value="lab">Labs</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 h-3.5 w-3.5 text-[#77786f]" />
-            </label>
-          </div>
-
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <select
-              value={filterGroup}
-              onChange={(event) => setFilterGroup(event.target.value)}
-              className="h-9 rounded-lg border border-[#dedbd4] bg-white px-3 text-xs text-[#44463f] shadow-sm outline-none focus:border-[#9fc4b7]"
-            >
-              <option value="">All groups ({groupsList.length})</option>
-              {groupsList.map((group) => <option key={group} value={group}>{group}</option>)}
-            </select>
-            <select
-              value={filterFaculty}
-              onChange={(event) => setFilterFaculty(event.target.value)}
-              className="h-9 max-w-[240px] rounded-lg border border-[#dedbd4] bg-white px-3 text-xs text-[#44463f] shadow-sm outline-none focus:border-[#9fc4b7]"
-            >
-              <option value="">All faculty ({facultyList.length})</option>
-              {facultyList.map((faculty) => <option key={faculty.id} value={faculty.id}>{faculty.id} – {faculty.name}</option>)}
-            </select>
-            <select
-              value={filterRoom}
-              onChange={(event) => setFilterRoom(event.target.value)}
-              className="h-9 rounded-lg border border-[#dedbd4] bg-white px-3 text-xs text-[#44463f] shadow-sm outline-none focus:border-[#9fc4b7]"
-            >
-              <option value="">All rooms ({roomsList.length})</option>
-              {roomsList.map((room) => <option key={room} value={room}>{room}</option>)}
-            </select>
-            {(filterGroup || filterFaculty || filterRoom || filterCategory) && (
+            {/* View Mode Toggle */}
+            <div className="inline-flex rounded-lg border border-[#dce4ee] bg-[#f8fafc] p-1">
               <button
-                onClick={() => {
-                  setFilterGroup("");
-                  setFilterFaculty("");
-                  setFilterRoom("");
-                  setFilterCategory("");
-                }}
-                className="h-9 rounded-lg px-3 text-xs font-medium text-[#69756b] transition-colors hover:bg-[#efeee9] hover:text-[#283d32]"
+                type="button"
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+                  viewMode === "table"
+                    ? "bg-white text-blue-700 shadow-sm"
+                    : "text-[#5b6a80] hover:text-[#18243a]"
+                }`}
               >
-                Clear filters
+                <TableIcon className="h-3.5 w-3.5" />
+                Table
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+                  viewMode === "grid"
+                    ? "bg-white text-blue-700 shadow-sm"
+                    : "text-[#5b6a80] hover:text-[#18243a]"
+                }`}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+                Grid
+              </button>
+            </div>
+          </div>
+
+          {/* Filter Dropdowns styled like Examinations page */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Day Filter */}
+            <select
+              value={dayFilter}
+              onChange={(e) => setDayFilter(e.target.value)}
+              className="h-11 min-w-[150px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All Days (Mon-Fri)</option>
+              {DAYS.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+
+            {/* Session Type Filter */}
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="h-11 min-w-[140px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All Types</option>
+              <option value="lecture">Lectures</option>
+              <option value="lab">Labs</option>
+              <option value="tutorial">Tutorials</option>
+            </select>
+
+            {/* Student Group Filter */}
+            <select
+              value={groupFilter}
+              onChange={(e) => setGroupFilter(e.target.value)}
+              className="h-11 min-w-[145px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All Groups ({groupsList.length})</option>
+              {groupsList.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
+
+            {/* Faculty Filter */}
+            <select
+              value={facultyFilter}
+              onChange={(e) => setFacultyFilter(e.target.value)}
+              className="h-11 max-w-[210px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All Faculty ({facultyList.length})</option>
+              {facultyList.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.id} – {f.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Room / Venue Filter */}
+            <select
+              value={roomFilter}
+              onChange={(e) => setRoomFilter(e.target.value)}
+              className="h-11 min-w-[140px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All Venues ({roomsList.length})</option>
+              {roomsList.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="h-11 rounded-lg border border-[#dce4ee] bg-white px-3.5 text-xs font-semibold text-[#5b6a80] shadow-sm transition-colors hover:bg-slate-50 hover:text-[#18243a]"
+              >
+                Clear
               </button>
             )}
-            <span className="ml-auto text-xs text-[#85857d]">
-              Showing <strong className="font-semibold text-[#4a4c45]">{visibleSessions.length}</strong> of {sessions.length} sessions
-            </span>
-          </div>
-        </CardContent>
-      </Card>
 
-      <Card className="overflow-hidden border-[#e3dfd8] bg-[#fbfaf7] text-[#252724] shadow-[0_14px_40px_rgba(22,28,24,0.08)]">
-        <CardHeader className="flex flex-row items-center justify-between border-b border-[#e8e5df] px-5 py-4">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold text-[#272a26]">
-              <Calendar className="h-4 w-4 text-[#6d9181]" />
-              Weekly timetable
-            </CardTitle>
-            <p className="mt-1 text-xs text-[#85857d]">{visibleSessions.length} sessions across the teaching week</p>
+            <button
+              type="button"
+              onClick={handleDownload}
+              title="Download Schedule JSON"
+              className="flex h-11 items-center gap-1.5 rounded-lg border border-[#dce4ee] bg-white px-3.5 text-xs font-semibold text-[#5b6a80] shadow-sm transition-colors hover:bg-slate-50 hover:text-[#18243a]"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </button>
           </div>
         </CardHeader>
 
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex flex-col items-center gap-3 py-16 text-[#7b7d75]">
-              <Loader2 className="h-6 w-6 animate-spin text-[#6d9181]" />
-              <p className="text-xs">Loading official weekly timetable…</p>
+            <div className="flex flex-col items-center gap-3 py-16 text-[#65748a]">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              <p className="text-sm">Loading academic timetable…</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="py-12 text-center text-sm text-[#65748a]">
+              No sessions found matching selected filters.
+            </div>
+          ) : viewMode === "table" ? (
+            /* 1. TABLE VIEW: Formatted exactly like the examination table */
+            <div className="overflow-x-auto px-5 pb-3">
+              <table className="w-full min-w-[1240px] border-collapse text-left">
+                <thead>
+                  <tr className="border-b border-[#e5ebf2] bg-[#fbfcfe] text-[12px] font-semibold uppercase tracking-wide text-[#5b6a80]">
+                    <th className="w-[120px] px-4 py-4">Session ID</th>
+                    <th className="w-[190px] px-4 py-4">Slot (Day &amp; Period)</th>
+                    <th className="w-[220px] px-4 py-4">Associated Course</th>
+                    <th className="w-[110px] px-4 py-4">Session Type</th>
+                    <th className="w-[160px] px-4 py-4">Student Groups</th>
+                    <th className="w-[210px] px-4 py-4">Faculty in Charge</th>
+                    <th className="w-[170px] px-4 py-4">Allocated Venue</th>
+                    <th className="w-[150px] px-4 py-4">Class Size</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#e8edf3] text-sm text-[#344157]">
+                  {filtered.map((s) => (
+                    <tr
+                      key={s.session_id}
+                      className="transition-colors odd:bg-white even:bg-[#f8fafd] hover:bg-blue-50/70"
+                    >
+                      {/* Session ID */}
+                      <td className="px-4 py-4 font-mono font-bold text-blue-700">
+                        {s.session_id}
+                      </td>
+
+                      {/* Slot (Day & Period) */}
+                      <td className="whitespace-nowrap px-4 py-4">
+                        <span className="font-semibold text-[#1f2b3f]">{s.day}</span>{" "}
+                        <span
+                          className={`ml-1 inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${
+                            s.duration > 1
+                              ? "border-[#fed7aa] bg-[#fff7ed] text-[#b45309]"
+                              : "border-[#dbeafe] bg-[#eff6ff] text-[#1d4ed8]"
+                          }`}
+                        >
+                          P{s.start_period}
+                          {s.duration > 1 ? `–P${s.end_period}` : ""} ({s.duration}h)
+                        </span>
+                        <div className="mt-0.5 font-mono text-[11px] text-[#65748a]">
+                          {formatPeriodSlot(s.start_period, s.end_period)}
+                        </div>
+                      </td>
+
+                      {/* Associated Course */}
+                      <td className="px-4 py-4">
+                        <div className="font-mono font-bold text-[#1f2b3f]">{s.course_id}</div>
+                        <div className="text-xs text-[#526077] line-clamp-1">{s.course_title}</div>
+                      </td>
+
+                      {/* Session Type */}
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold capitalize ${
+                            s.kind === "lab"
+                              ? "border-[#e9d5ff] bg-[#faf5ff] text-[#7e22ce]"
+                              : s.kind === "tutorial"
+                              ? "border-[#a5f3fc] bg-[#ecfeff] text-[#0e7490]"
+                              : "border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]"
+                          }`}
+                        >
+                          {s.kind}
+                        </span>
+                      </td>
+
+                      {/* Student Groups */}
+                      <td className="px-4 py-4">
+                        <div className="flex flex-wrap gap-1">
+                          {(s.groups || []).map((g: string) => (
+                            <span
+                              key={g}
+                              className="rounded-md bg-[#f4f6f9] px-2 py-1 font-mono text-[11px] text-[#43536b]"
+                            >
+                              {g}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+
+                      {/* Faculty in Charge */}
+                      <td className="px-4 py-4">
+                        <div className="font-medium text-[#27364d]">{s.faculty_name}</div>
+                        <div className="font-mono text-xs text-[#65748a]">
+                          {s.faculty_id} ({s.department})
+                        </div>
+                      </td>
+
+                      {/* Allocated Venue */}
+                      <td className="px-4 py-4">
+                        <div className="font-mono font-bold text-[#07805d]">{s.room_id}</div>
+                        <div className="text-xs text-[#65748a]">
+                          {s.room_name} ({s.building})
+                        </div>
+                      </td>
+
+                      {/* Class Size */}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="inline-flex min-h-[40px] items-center rounded-full border border-[#a9e7d6] bg-[#e7f8f2] px-3.5 py-1 text-[13px] font-medium leading-5 text-[#087f5b]">
+                          {s.size} students (OK)
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : (
-            <div className="overflow-x-auto px-4 pb-4 pt-3">
+            /* 2. GRID VIEW: Weekly visual matrix fallback */
+            <div className="overflow-x-auto px-5 pb-5 pt-3">
               <div className="min-w-[1080px]">
                 <div
                   className="mb-2 grid gap-2"
                   style={{ gridTemplateColumns: "78px repeat(5, minmax(188px, 1fr))" }}
                 >
-                  <div className="flex items-end px-2 pb-3 text-[10px] font-semibold uppercase tracking-wide text-[#8b8a81]">Time</div>
+                  <div className="flex items-end px-2 pb-3 text-[10px] font-semibold uppercase tracking-wide text-[#8b8a81]">
+                    Time
+                  </div>
                   {sessionsByDay.map((day) => (
-                    <div key={day.code} className="rounded-xl border border-[#e8e5df] bg-[#f3f1ec] px-3 py-2.5">
+                    <div key={day.code} className="rounded-xl border border-[#e8edf3] bg-[#f8fafc] px-3 py-2.5">
                       <div className="flex items-end justify-between gap-2">
                         <div>
-                          <p className="text-[17px] font-semibold leading-none text-[#292c28]">{day.label.slice(0, 3)}</p>
-                          <p className="mt-1 text-[10px] text-[#85857d]">{day.label}</p>
+                          <p className="text-xs font-semibold text-[#18243a]">{day.label}</p>
+                          <p className="text-[10px] text-[#65748a]">{day.sessions.length} sessions</p>
                         </div>
-                        <span className="rounded-full bg-white/80 px-2 py-1 text-[10px] font-medium text-[#77786f]">
-                          {day.sessions.length} sessions
+                        <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-blue-700 shadow-sm border border-[#e8edf3]">
+                          {day.code}
                         </span>
                       </div>
                     </div>
@@ -410,81 +495,79 @@ export default function TimetablePage() {
                 </div>
 
                 <div
-                  className="grid gap-2"
-                  style={{ gridTemplateColumns: "78px repeat(5, minmax(188px, 1fr))" }}
+                  className="relative grid gap-2"
+                  style={{
+                    gridTemplateColumns: "78px repeat(5, minmax(188px, 1fr))",
+                    height: `${TIMELINE_HEIGHT}px`,
+                  }}
                 >
-                  <div className="relative" style={{ height: TIMELINE_HEIGHT }}>
-                    {PERIODS.map((period) => {
-                      const [start, end] = period.time.split(" - ");
-                      return (
-                        <div key={period.num} className="absolute left-0 right-1 flex flex-col justify-center pl-1" style={{ top: periodTop(period.num), height: GRID_ROW_HEIGHT }}>
-                          <span className="text-[10px] font-medium text-[#4f514a]">{formatClockTime(start)}</span>
-                          <span className="mt-0.5 text-[9px] text-[#96958c]">{formatClockTime(end)}</span>
-                        </div>
-                      );
-                    })}
-                    <div className="absolute left-1 right-1 flex flex-col justify-center border-y border-[#e9e6df] pl-1 text-[9px] text-[#aaa79d]" style={{ top: 5 * GRID_ROW_HEIGHT, height: LUNCH_ROW_HEIGHT }}>
-                      <span>01:00 PM</span>
-                      <span>02:00 PM</span>
-                    </div>
+                  {/* Timeline labels */}
+                  <div className="relative">
+                    {Array.from({ length: 9 }, (_, i) => i + 1).map((period) => (
+                      <div
+                        key={period}
+                        className="absolute left-0 right-0 px-1 text-right text-[11px] text-[#65748a]"
+                        style={{ top: `${periodTop(period)}px`, height: `${GRID_ROW_HEIGHT}px` }}
+                      >
+                        <div className="font-semibold text-[#18243a]">P{period}</div>
+                        <div className="text-[10px]">{PERIOD_TIMES[period]?.start}</div>
+                      </div>
+                    ))}
                   </div>
 
-                  {sessionsByDay.map((day) => (
-                    <div key={day.code} className="relative overflow-hidden rounded-xl" style={{ height: TIMELINE_HEIGHT }}>
-                      {PERIODS.map((period) => (
-                        <div
-                          key={period.num}
-                          className="group absolute left-0 right-0 rounded-lg border border-dashed border-[#dedbd4] bg-white/55 transition-colors hover:border-[#c8d6cc] hover:bg-white/80"
-                          style={{ top: periodTop(period.num) + 3, height: GRID_ROW_HEIGHT - 6 }}
-                        >
-                          <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-lg font-light text-[#c5c3bb] opacity-0 transition-opacity group-hover:opacity-70">+</span>
-                        </div>
-                      ))}
+                  {/* Columns per day */}
+                  {sessionsByDay.map((day) => {
+                    const laidOut = layoutDaySessions(day.sessions);
+                    return (
                       <div
-                        className="absolute left-0 right-0 flex items-center justify-center border-y border-[#e8e5df] bg-[#f3f1ec]/90 text-[9px] font-medium uppercase tracking-[0.16em] text-[#a09e94]"
-                        style={{ top: 5 * GRID_ROW_HEIGHT, height: LUNCH_ROW_HEIGHT }}
+                        key={day.code}
+                        className="relative rounded-xl border border-[#e8edf3] bg-white shadow-sm"
                       >
-                        Lunch break
-                      </div>
-                      {layoutDaySessions(day.sessions).map(({ session, lane, laneCount }) => {
-                        const colors = colorsForCourse(session.course_id);
-                        const width = 100 / laneCount;
-                        const groupSummary = (session.groups ?? []).slice(0, 2).join(", ");
-                        return (
-                          <article
-                            key={session.session_id}
-                            title={`${session.course_id} · ${session.course_title} · ${session.kind} · ${session.room_name} · ${session.faculty_name}`}
-                            className={`absolute z-10 overflow-hidden rounded-lg border px-2.5 py-2 shadow-[0_2px_5px_rgba(30,35,32,0.08)] transition duration-150 hover:z-20 hover:-translate-y-0.5 hover:shadow-md ${colors.card}`}
-                            style={{
-                              top: periodTop(session.start_period) + 5,
-                              height: Math.max(66, session.duration * GRID_ROW_HEIGHT - 10),
-                              left: `calc(${lane * width}% + 4px)`,
-                              width: `calc(${width}% - 8px)`,
-                            }}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className={`rounded px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-[0.08em] ${colors.label}`}>{session.kind}</span>
-                              <span className="truncate text-[9px] font-semibold opacity-70">{session.course_id}</span>
-                            </div>
-                            <p className="mt-1.5 line-clamp-2 text-[11px] font-semibold leading-[1.2]">
-                              {session.course_title || session.course_id}
-                            </p>
-                            <p className="mt-1 truncate text-[9px] opacity-75">
-                              P{session.start_period}{session.duration > 1 ? `–P${session.end_period}` : ""} · {session.room_id}
-                            </p>
-                            <p className="truncate text-[9px] opacity-70">
-                              {groupSummary || session.faculty_name}
-                            </p>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
+                        {laidOut.map(({ session, lane, laneCount }) => {
+                          const top = periodTop(session.start_period);
+                          const bottom =
+                            periodTop(session.end_period) +
+                            (session.end_period <= 5 ? GRID_ROW_HEIGHT : GRID_ROW_HEIGHT);
+                          const height = Math.max(bottom - top, 56);
+                          const widthPercent = 100 / Math.max(laneCount, 1);
+                          const leftPercent = lane * widthPercent;
+                          const palette = colorsForCourse(session.course_id);
 
-                {visibleSessions.length === 0 && (
-                  <p className="py-5 text-center text-xs text-[#85857d]">No sessions match these filters. Clear filters to see the full week.</p>
-                )}
+                          return (
+                            <div
+                              key={session.session_id}
+                              style={{
+                                top: `${top}px`,
+                                height: `${height}px`,
+                                left: `calc(${leftPercent}% + 2px)`,
+                                width: `calc(${widthPercent}% - 4px)`,
+                              }}
+                              className={`absolute z-10 flex flex-col justify-between overflow-hidden rounded-lg border p-1.5 shadow-sm transition-transform hover:z-20 hover:scale-[1.02] ${palette.card}`}
+                            >
+                              <div>
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="font-mono text-[10px] font-bold truncate">
+                                    {session.course_id}
+                                  </span>
+                                  <span className={`rounded px-1 text-[9px] font-semibold uppercase ${palette.label}`}>
+                                    {session.kind}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] font-medium leading-tight line-clamp-1">
+                                  {session.course_title}
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between text-[9px] font-mono">
+                                <span className="font-semibold">{session.room_id}</span>
+                                <span>{(session.groups || []).join(",")}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
