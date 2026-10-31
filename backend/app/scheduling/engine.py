@@ -153,6 +153,11 @@ class SchedulingEngine:
                 if preferred_idx is not None:
                     for idx, variable in enumerate(vars_for_s):
                         model.add_hint(variable, 1 if idx == preferred_idx else 0)
+                    if minimize_movement:
+                        # A still-valid baseline slot is kept fixed during repair.
+                        # Only sessions invalidated by the requested disruption
+                        # enter the search, which makes minimal repairs practical.
+                        model.add(vars_for_s[preferred_idx] == 1)
 
         # H4: No room double-booking
         # Map (room_id, day, period) -> list of bool vars
