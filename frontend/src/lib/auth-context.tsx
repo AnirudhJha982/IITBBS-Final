@@ -12,7 +12,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { AuthUser, UserRole } from "@/lib/auth";
 import { ROLE_HOME } from "@/lib/auth";
 
@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   const refresh = useCallback(async () => {
     try {
@@ -57,6 +58,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    if (isLoading || user || pathname === "/login") return;
+    const next = pathname && pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : "";
+    router.replace(`/login${next}`);
+  }, [isLoading, pathname, router, user]);
+
   const logout = useCallback(async () => {
     try {
       await fetch("/api/v1/auth/logout", { method: "POST" });
@@ -66,6 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     router.push("/login");
   }, [router]);
+
+  if (pathname !== "/login" && (isLoading || !user)) {
+    return (
+      <div className="min-h-screen bg-navy-950" aria-label="Checking session" />
+    );
+  }
 
   return (
     <AuthContext.Provider
