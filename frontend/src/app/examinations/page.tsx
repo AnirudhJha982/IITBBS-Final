@@ -2,11 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { AppShell } from "@/components/shared/AppShell";
-import { PageHeader } from "@/components/shared/PageHeader";
-import { StatCard } from "@/components/shared/StatCard";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { fetchBackend } from "@/lib/api";
-import { GraduationCap, Calendar, Users, ShieldCheck, Loader2 } from "lucide-react";
+import { GraduationCap, Loader2 } from "lucide-react";
 
 export default function ExaminationsPage() {
   const [exams, setExams] = useState<any[]>([]);
@@ -34,49 +32,21 @@ export default function ExaminationsPage() {
 
   const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
 
-  const filtered = exams.filter((e) => {
-    if (dayFilter && e.day !== dayFilter) return false;
-    if (sessionFilter && e.session !== sessionFilter) return false;
-    return true;
-  });
-
-  const totalStudents = exams.reduce((acc, e) => acc + (e.students_count || 0), 0);
+  const filtered = exams
+    .filter((e) => {
+      if (dayFilter && e.day !== dayFilter) return false;
+      if (sessionFilter && e.session !== sessionFilter) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const dayOrder = days.indexOf(a.day) - days.indexOf(b.day);
+      if (dayOrder !== 0) return dayOrder;
+      const sessionOrder = (a.session === "AM" ? 0 : 1) - (b.session === "AM" ? 0 : 1);
+      return sessionOrder || a.exam_id.localeCompare(b.exam_id);
+    });
 
   return (
     <AppShell>
-      <PageHeader
-        title="Midsemester Examination Scheduling"
-        description="Conflict-free examination slotting across 12 sessions (MON-SAT AM/PM) with half-capacity room seating"
-        badge="Midsem 2026 — 41 Exams Scheduled"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          label="Total Midsem Exams"
-          value={`${exams.length} Exams`}
-          subtext="100% Scheduled with 0 conflicts"
-          icon={<GraduationCap className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Total Students Examined"
-          value={`${totalStudents.toLocaleString()} Seats`}
-          subtext="Half-capacity seating enforced"
-          icon={<Users className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Examination Slots"
-          value="12 Sessions"
-          subtext="Mon-Sat (AM: 09:30, PM: 14:00)"
-          icon={<Calendar className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Group Clash Rate"
-          value="0 Conflicts"
-          subtext="No group has 2 exams in same slot"
-          icon={<ShieldCheck className="w-4 h-4" />}
-        />
-      </div>
-
       <Card className="overflow-hidden border-[#e3e8ef] bg-white shadow-[0_14px_40px_rgba(22,28,24,0.08)]">
         <CardHeader className="flex flex-col gap-4 border-b border-[#e8edf3] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#18243a]">
