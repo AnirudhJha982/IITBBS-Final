@@ -2,14 +2,19 @@
  * CampusOS AI - Authentication Utilities
  * Next.js-native auth for Vercel serverless deployment.
  * Uses Node.js crypto (available in Next.js API route runtime).
- * Middleware uses cookie presence check only (no crypto in Edge).
+ * Protected API routes verify the signed session token.
  */
 
 import { createHash, createHmac } from "crypto";
 
 export const AUTH_COOKIE = "campusos_session";
-const AUTH_SECRET =
-  process.env.CAMPUSOS_AUTH_SECRET ?? "campusos-dev-secret-cit-2026-hackathon";
+const DEVELOPMENT_AUTH_SECRET = "campusos-dev-secret-cit-2026-hackathon";
+
+function getAuthSecret(): string | null {
+  const configuredSecret = process.env.CAMPUSOS_AUTH_SECRET;
+  if (configuredSecret && configuredSecret.length >= 32) return configuredSecret;
+  return process.env.NODE_ENV === "production" ? null : DEVELOPMENT_AUTH_SECRET;
+}
 
 // ── Role types ──────────────────────────────────────────────────────────────
 
@@ -125,10 +130,14 @@ export function verifyCredentials(
 // ── Token sign / verify (HMAC-SHA256) ──────────────────────────────────────
 
 export function signToken(user: AuthUser): string {
+  const authSecret = getAuthSecret();
+  if (!authSecret) {
+    throw new Error("CAMPUSOS_AUTH_SECRET must be set to a 32-character secret in production.");
+  }
   const payload = Buffer.from(
     JSON.stringify({ ...user, iat: Date.now() })
   ).toString("base64url");
-  const sig = createHmac("sha256", AUTH_SECRET)
+  const sig = createHmac("sha256", authSecret)
     .update(payload)
     .digest("base64url");
   return `${payload}.${sig}`;
@@ -136,11 +145,13 @@ export function signToken(user: AuthUser): string {
 
 export function verifyToken(token: string): AuthUser | null {
   try {
+    const authSecret = getAuthSecret();
+    if (!authSecret) return null;
     const dot = token.lastIndexOf(".");
     if (dot < 0) return null;
     const payload = token.slice(0, dot);
     const sig = token.slice(dot + 1);
-    const expectedSig = createHmac("sha256", AUTH_SECRET)
+    const expectedSig = createHmac("sha256", authSecret)
       .update(payload)
       .digest("base64url");
     if (sig !== expectedSig) return null;
