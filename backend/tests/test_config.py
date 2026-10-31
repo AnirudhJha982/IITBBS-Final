@@ -3,7 +3,7 @@ CampusOS AI - Configuration & RBAC Unit Tests
 """
 
 import pytest
-from backend.app.core.config import settings
+from backend.app.core.config import Settings, settings
 from backend.app.core.permissions import Role, Permission, ROLE_PERMISSIONS
 from backend.app.core.auth import CurrentUser
 
@@ -42,3 +42,10 @@ def test_current_user_permission_check():
     )
     assert faculty_user.has_permission(Permission.VIEW_TIMETABLE) is True
     assert faculty_user.has_permission(Permission.GENERATE_TIMETABLE) is False
+
+
+def test_postgres_sslmode_is_normalized_for_asyncpg():
+    url = Settings.assemble_database_url("postgres://user:pass@db.example.test/campusos?sslmode=require&connect_timeout=10")
+    assert url.startswith("postgresql+asyncpg://")
+    assert "ssl=require" in url
+    assert "sslmode=" not in url

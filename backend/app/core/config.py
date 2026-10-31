@@ -5,6 +5,7 @@ Configured using Pydantic Settings with support for environment variables and .e
 
 import os
 from typing import List, Union
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -53,9 +54,15 @@ class Settings(BaseSettings):
         if is_serverless and url.startswith("sqlite") and "/tmp" not in url:
             return "sqlite+aiosqlite:////tmp/campusos_local.db"
         if url.startswith("postgres://"):
-            return url.replace("postgres://", "postgresql+asyncpg://", 1)
-        if url.startswith("postgresql://"):
-            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if url.startswith("postgresql+asyncpg://"):
+            parts = urlsplit(url)
+            query = parse_qsl(parts.query, keep_blank_values=True)
+            if any(key == "sslmode" for key, _ in query):
+                query = [("ssl" if key == "sslmode" else key, value) for key, value in query]
+            return urlunsplit(parts._replace(query=urlencode(query, doseq=True)))
         return url
 
     # Security & Tokens
