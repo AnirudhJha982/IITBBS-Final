@@ -68,6 +68,15 @@ class ScheduleLoader:
     def load_baseline_schedule(cls, force_reload: bool = False) -> Dict[str, Any]:
         if cls._cached_baseline is not None and not force_reload:
             return cls._cached_baseline
+        # Check /tmp first (for newly generated schedules in serverless)
+        tmp_path = Path("/tmp/schedule.json")
+        if tmp_path.exists():
+            try:
+                with open(tmp_path, "r", encoding="utf-8") as f:
+                    cls._cached_baseline = json.load(f)
+                return cls._cached_baseline
+            except Exception:
+                pass
         path = cls.get_baseline_schedule_path()
         if not path.exists():
             logger.error(f"Baseline schedule not found at {path}")
@@ -80,6 +89,14 @@ class ScheduleLoader:
     def load_disrupted_schedule(cls, force_reload: bool = False) -> Dict[str, Any]:
         if cls._cached_disrupted is not None and not force_reload:
             return cls._cached_disrupted
+        tmp_path = Path("/tmp/schedule_after.json")
+        if tmp_path.exists():
+            try:
+                with open(tmp_path, "r", encoding="utf-8") as f:
+                    cls._cached_disrupted = json.load(f)
+                return cls._cached_disrupted
+            except Exception:
+                pass
         path = cls.get_disrupted_schedule_path()
         if not path.exists():
             logger.error(f"Disrupted schedule not found at {path}")
@@ -91,15 +108,31 @@ class ScheduleLoader:
     @classmethod
     def save_baseline_schedule(cls, schedule: Dict[str, Any]) -> None:
         cls._cached_baseline = schedule
-        path = cls.get_baseline_schedule_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(schedule, f, indent=2)
+        try:
+            path = cls.get_baseline_schedule_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(schedule, f, indent=2)
+        except OSError:
+            # Fallback to /tmp in read-only serverless environments
+            try:
+                with open("/tmp/schedule.json", "w", encoding="utf-8") as f:
+                    json.dump(schedule, f, indent=2)
+            except Exception:
+                pass
 
     @classmethod
     def save_disrupted_schedule(cls, schedule: Dict[str, Any]) -> None:
         cls._cached_disrupted = schedule
-        path = cls.get_disrupted_schedule_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(schedule, f, indent=2)
+        try:
+            path = cls.get_disrupted_schedule_path()
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(schedule, f, indent=2)
+        except OSError:
+            # Fallback to /tmp in read-only serverless environments
+            try:
+                with open("/tmp/schedule_after.json", "w", encoding="utf-8") as f:
+                    json.dump(schedule, f, indent=2)
+            except Exception:
+                pass

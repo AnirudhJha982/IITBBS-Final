@@ -13,6 +13,12 @@ for _d in [str(_root), str(_backend)]:
     if _d not in sys.path:
         sys.path.insert(0, _d)
 
+if "backend" not in sys.modules:
+    import types
+    backend_pkg = types.ModuleType("backend")
+    backend_pkg.__path__ = [str(_backend)]
+    sys.modules["backend"] = backend_pkg
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI, Request, status

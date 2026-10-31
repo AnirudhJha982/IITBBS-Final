@@ -48,8 +48,9 @@ class Settings(BaseSettings):
     @classmethod
     def assemble_database_url(cls, v: Union[str, None]) -> str:
         url = v or "sqlite+aiosqlite:///./campusos_local.db"
-        # On Vercel serverless functions the project directory is read-only; use /tmp for SQLite
-        if os.environ.get("VERCEL") and url.startswith("sqlite") and "/tmp" not in url:
+        # On Vercel / AWS Lambda serverless functions the project directory is read-only; use /tmp for SQLite
+        is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("LAMBDA_TASK_ROOT")
+        if is_serverless and url.startswith("sqlite") and "/tmp" not in url:
             return "sqlite+aiosqlite:////tmp/campusos_local.db"
         return url
 
