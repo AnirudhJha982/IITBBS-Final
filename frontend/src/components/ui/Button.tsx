@@ -18,7 +18,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       secondary:
         "bg-surface-elevated hover:bg-surface-highlight text-slate-200 border border-surface-border",
       outline:
-        "border border-surface-border bg-transparent hover:bg-surface-elevated text-slate-300 hover:text-white",
+        "border border-surface-border bg-transparent hover:bg-surface-elevated text-slate-700 hover:text-slate-900",
       ghost:
         "bg-transparent hover:bg-surface-elevated text-slate-400 hover:text-slate-200",
       danger:

@@ -143,7 +143,7 @@ export function Sidebar() {
           <Layers className="w-5 h-5" />
         </div>
         <div>
-          <span className="font-bold text-sm tracking-tight text-white block">
+          <span className="font-bold text-sm tracking-tight text-slate-900 block">
             CampusOS AI
           </span>
           <span className="text-[10px] text-slate-400 block font-medium">

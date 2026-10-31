@@ -23,7 +23,7 @@ export function StatCard({ label, value, subtext, icon, trend, className }: Stat
           {icon && <div className="text-slate-400 p-2 rounded-lg bg-surface-muted/50">{icon}</div>}
         </div>
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-2xl font-bold tracking-tight text-white">{value}</span>
+          <span className="text-2xl font-bold tracking-tight text-slate-900">{value}</span>
           {trend && (
             <span
               className={cn(

@@ -55,6 +55,7 @@ node_modules/
 .pnp.js
 frontend/.next/
 frontend/campusos-build/
+frontend/campusos-bright-build/
 frontend/out/
 frontend/build/
 .next/

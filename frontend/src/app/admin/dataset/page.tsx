@@ -69,7 +69,7 @@ export default function DatasetAdminPage() {
       <Card>
         <CardHeader><CardTitle className="text-sm">Current dataset</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {summary ? <><p className="text-xs text-slate-300">ID: <span className="font-mono text-blue-300">{summary.dataset_id}</span></p><div className="grid grid-cols-2 gap-2 text-xs">{Object.entries(summary.counts || {}).map(([key, value]) => <div key={key} className="rounded border border-surface-border bg-surface-muted p-2 text-slate-300">{key.replaceAll("_", " ")}: <b className="text-white">{String(value)}</b></div>)}</div><p className="text-[11px] text-slate-500">Last upload: {summary.last_uploaded_at || "checked-in starter dataset"}</p></> : <Loader2 className="h-5 w-5 animate-spin text-blue-400" />}
+          {summary ? <><p className="text-xs text-slate-300">ID: <span className="font-mono text-blue-700">{summary.dataset_id}</span></p><div className="grid grid-cols-2 gap-2 text-xs">{Object.entries(summary.counts || {}).map(([key, value]) => <div key={key} className="rounded border border-surface-border bg-surface-muted p-2 text-slate-300">{key.replaceAll("_", " ")}: <b className="text-slate-900">{String(value)}</b></div>)}</div><p className="text-[11px] text-slate-500">Last upload: {summary.last_uploaded_at || "checked-in starter dataset"}</p></> : <Loader2 className="h-5 w-5 animate-spin text-blue-400" />}
           <Button size="sm" variant="outline" onClick={download}><Download className="mr-1.5 h-4 w-4" />Download JSON to edit</Button>
         </CardContent>
       </Card>

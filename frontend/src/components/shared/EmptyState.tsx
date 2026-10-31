@@ -22,7 +22,7 @@ export function EmptyState({
       <div className="p-3.5 rounded-xl bg-surface-elevated border border-surface-border text-blue-400 mb-4 shadow-sm">
         {icon || <Database className="w-8 h-8 text-blue-400" />}
       </div>
-      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold text-slate-900 mb-2">{title}</h3>
       <p className="text-sm text-slate-400 max-w-md mb-5 leading-relaxed">{description}</p>
       
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-muted/60 border border-surface-border text-xs text-slate-400 mb-6">
