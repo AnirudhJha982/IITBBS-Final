@@ -3,7 +3,16 @@ import citDataRaw from "@/data/cit_public.json";
 import baselineScheduleRaw from "@/data/schedule.json";
 import disruptedScheduleRaw from "@/data/schedule_after.json";
 import disruptionRaw from "@/data/sample_disruption.json";
-import { AUTH_COOKIE, verifyToken, type UserRole } from "@/lib/auth";
+import {
+  AUTH_COOKIE,
+  verifyToken,
+  verifyCredentials,
+  signToken,
+  buildSetCookieHeader,
+  buildClearCookieHeader,
+  ROLE_HOME,
+  type UserRole,
+} from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +161,22 @@ export async function GET(
 
   const authUser = getAuthUser(req);
   const role: UserRole | null = authUser?.role ?? null;
+
+  // ── 0. Auth Me ─────────────────────────────────────────────────────────
+  if (path === "auth/me") {
+    if (!authUser) return unauthorized();
+    return NextResponse.json({
+      success: true,
+      user: {
+        userId: authUser.userId,
+        email: authUser.email,
+        name: authUser.name,
+        role: authUser.role,
+        department: authUser.department,
+        entityId: authUser.entityId,
+      },
+    });
+  }
 
   // ── 1. Dashboard Stats ──────────────────────────────────────────────────
   if (path === "dashboard/stats") {
@@ -797,6 +822,61 @@ export async function POST(
   { params }: { params: { slug: string[] } }
 ) {
   const path = params.slug.join("/");
+
+  // ── 0a. Auth Login ───────────────────────────────────────────────────────
+  if (path === "auth/login") {
+    const body = await req.json().catch(() => ({}));
+    const { email, password } = body as { email?: string; password?: string };
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, message: "Email and password are required." },
+        { status: 400 }
+      );
+    }
+
+    const user = verifyCredentials(email, password);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, message: "Invalid credentials. Please try again." },
+        { status: 401 }
+      );
+    }
+
+    const token = signToken(user);
+    const cookieHeader = buildSetCookieHeader(token);
+
+    return NextResponse.json(
+      {
+        success: true,
+        user: {
+          userId: user.userId,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          department: user.department,
+          entityId: user.entityId,
+        },
+        redirectTo: ROLE_HOME[user.role],
+      },
+      {
+        status: 200,
+        headers: { "Set-Cookie": cookieHeader },
+      }
+    );
+  }
+
+  // ── 0b. Auth Logout ──────────────────────────────────────────────────────
+  if (path === "auth/logout") {
+    return NextResponse.json(
+      { success: true, message: "Logged out successfully." },
+      {
+        status: 200,
+        headers: { "Set-Cookie": buildClearCookieHeader() },
+      }
+    );
+  }
+
   const authUser = getAuthUser(req);
   const role: UserRole | null = authUser?.role ?? null;
 
