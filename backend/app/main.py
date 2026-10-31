@@ -39,28 +39,14 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Environment: {settings.ENVIRONMENT} | Debug: {settings.DEBUG}")
     logger.info(f"AI Provider configured: {settings.AI_PROVIDER} | Solver: Google OR-Tools CP-SAT")
     
-    # Run any initial database table creation for dev/serverless if needed
-    if settings.DATABASE_URL.startswith("sqlite"):
-        try:
-            from backend.app.database.session import engine, AsyncSessionLocal
-            from backend.app.database.base import Base
-            async with engine.begin() as conn:
-                await conn.run_sync(Base.metadata.create_all)
-            logger.info("Initialized local development database schema.")
-
-            from sqlalchemy import select, func
-            from backend.app.models.entities import Room
-            from backend.app.services.data_importer import DataImporter
-            from backend.app.services.schedule_loader import ScheduleLoader
-            async with AsyncSessionLocal() as session:
-                room_count = await session.scalar(select(func.count()).select_from(Room))
-                if not room_count:
-                    dataset_path = ScheduleLoader.get_master_dataset_path()
-                    if dataset_path.exists():
-                        await DataImporter.import_from_json(dataset_path, session)
-                        logger.info("Auto-populated database with official dataset.")
-        except Exception as e:
-            logger.warning(f"Database initialization in lifespan bypassed: {e}")
+    # Pre-warm ScheduleLoader in memory (instant JSON parse, 0 cold-start latency)
+    try:
+        from backend.app.services.schedule_loader import ScheduleLoader
+        ScheduleLoader.load_dataset()
+        ScheduleLoader.load_baseline_schedule()
+        logger.info("ScheduleLoader dataset pre-warmed successfully.")
+    except Exception as e:
+        logger.warning(f"ScheduleLoader pre-warm bypassed: {e}")
 
     yield
 
