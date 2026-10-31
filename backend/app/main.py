@@ -3,6 +3,16 @@ CampusOS AI - Main FastAPI Application Entry Point
 Production-ready configuration with CORS, structured error handling, logging, and health diagnostics.
 """
 
+import sys
+from pathlib import Path
+
+# Add project root so 'backend.app' can be imported whether run from root or backend/
+_root = Path(__file__).resolve().parent.parent.parent
+_backend = Path(__file__).resolve().parent.parent
+for _d in [str(_root), str(_backend)]:
+    if _d not in sys.path:
+        sys.path.insert(0, _d)
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from fastapi import FastAPI, Request, status
