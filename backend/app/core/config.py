@@ -3,6 +3,7 @@ CampusOS AI - Application Configuration
 Configured using Pydantic Settings with support for environment variables and .env files.
 """
 
+import os
 from typing import List, Union
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -42,6 +43,15 @@ class Settings(BaseSettings):
     DATABASE_ECHO: bool = False
     DB_POOL_SIZE: int = 10
     DB_MAX_OVERFLOW: int = 20
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_database_url(cls, v: Union[str, None]) -> str:
+        url = v or "sqlite+aiosqlite:///./campusos_local.db"
+        # On Vercel serverless functions the project directory is read-only; use /tmp for SQLite
+        if os.environ.get("VERCEL") and url.startswith("sqlite") and "/tmp" not in url:
+            return "sqlite+aiosqlite:////tmp/campusos_local.db"
+        return url
 
     # Security & Tokens
     SECRET_KEY: str = "development-temporary-secret-key-must-be-rotated-for-production-min32char"
