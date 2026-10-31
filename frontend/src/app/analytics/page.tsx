@@ -1,190 +1,51 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { AppShell } from "@/components/shared/AppShell";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { fetchBackend } from "@/lib/api";
-import { BarChart3, Activity, TrendingUp, PieChart, ShieldCheck, Loader2 } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, CheckCircle2, DoorClosed, Loader2 } from "lucide-react";
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadAnalytics = async () => {
+    (async () => {
       try {
-        setLoading(true);
-        const res = await fetchBackend("/analytics/");
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
-        }
-      } catch (err) {
-        console.error("Failed to load analytics:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadAnalytics();
+        const response = await fetchBackend("/analytics/");
+        const result = await response.json();
+        if (!response.ok || !result.success) throw new Error(result.message || "Analytics could not be loaded.");
+        setData(result);
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : "Analytics service is unavailable.");
+      } finally { setLoading(false); }
+    })();
   }, []);
 
-  const summary = data?.summary || {
-    total_weekly_hours: 243,
-    total_sessions: 189,
-    average_room_utilization: 44.8,
-    hard_violations: 0,
-    soft_penalties: { total: 339, S1_faculty_avoid: 0, S2_group_gaps: 69, S3_group_overload: 87, S4_course_repeat: 183 },
-  };
+  const summary = data?.summary || {};
+  const venues = data?.top_utilized_venues || [];
+  const conflicts = data?.current_conflicts || [];
+  const pending = data?.pending_approvals || [];
 
-  const daysDist = data?.days_distribution || [
-    { day: "MON", sessions: 39, hours: 49 },
-    { day: "TUE", sessions: 37, hours: 48 },
-    { day: "WED", sessions: 38, hours: 49 },
-    { day: "THU", sessions: 38, hours: 49 },
-    { day: "FRI", sessions: 37, hours: 48 },
-  ];
+  return <AppShell>
+    <PageHeader title="Campus Analytics & Utilization" description="Live room use, booking approvals, and timetable overlap checks from the active schedule." badge="Live schedule metrics" />
+    {error && <div className="mb-4 rounded border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200">{error}</div>}
+    <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StatCard label="Average room use" value={summary.average_room_utilization === undefined ? "—" : `${summary.average_room_utilization}%`} subtext="Across official campus rooms" icon={<BarChart3 className="h-4 w-4" />} />
+      <StatCard label="Weekly teaching hours" value={summary.total_weekly_hours ?? "—"} subtext={`${summary.total_sessions ?? 0} active placements`} icon={<Activity className="h-4 w-4 text-blue-400" />} />
+      <StatCard label="Current overlaps" value={summary.current_conflicts ?? "—"} subtext="Room, faculty, and cohort checks" icon={<AlertTriangle className="h-4 w-4 text-amber-400" />} />
+      <StatCard label="Pending approvals" value={summary.pending_approvals ?? "—"} subtext="Venue requests awaiting a decision" icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />} />
+    </div>
 
-  const topVenues = data?.top_utilized_venues || [];
+    <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <Card><CardHeader><CardTitle className="text-sm">Active timetable conflicts</CardTitle></CardHeader><CardContent className="space-y-2">{loading ? <Loader2 className="mx-auto h-5 w-5 animate-spin text-blue-400" /> : conflicts.length ? conflicts.map((item: any, index: number) => <div key={index} className="rounded border border-rose-500/20 bg-rose-500/5 p-2 text-xs text-slate-300"><b>{item.day} P{item.periods?.[0]}–P{item.periods?.[1]}</b> · {item.sessions?.join(" / ")}<p className="mt-1 text-[11px] text-rose-200">{item.reasons?.join(", ")}</p></div>) : <p className="text-xs text-emerald-300">No room, faculty, or student-group overlaps detected.</p>}</CardContent></Card>
+      <Card><CardHeader><CardTitle className="text-sm">Pending venue approvals</CardTitle></CardHeader><CardContent className="space-y-2">{loading ? <Loader2 className="mx-auto h-5 w-5 animate-spin text-blue-400" /> : pending.length ? pending.map((item: any) => <div key={item.request_id} className="rounded border border-surface-border bg-surface-muted p-2 text-xs text-slate-300"><span className="font-mono text-blue-300">{item.request_id}</span> · {item.title} · {item.requester}</div>) : <p className="text-xs text-slate-400">No booking approvals are waiting.</p>}</CardContent></Card>
+    </div>
 
-  return (
-    <AppShell>
-      <PageHeader
-        title="Campus Analytics & Utilization Reporting"
-        description="Comprehensive metrics on venue utilization, teaching loads, and constraint compliance"
-        badge="Zero Hallucinated Metrics — Canonical Verified"
-      />
-
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-        <StatCard
-          label="Venue Utilization"
-          value={`${summary.average_room_utilization}%`}
-          subtext="Average across 27 campus rooms"
-          icon={<BarChart3 className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Weekly Contact Hours"
-          value={`${summary.total_weekly_hours} Hours`}
-          subtext={`Across ${summary.total_sessions} scheduled sessions`}
-          icon={<Activity className="w-4 h-4" />}
-        />
-        <StatCard
-          label="Hard Violations"
-          value="0 Conflicts"
-          subtext="100% constraint satisfaction"
-          icon={<ShieldCheck className="w-4 h-4 text-emerald-400" />}
-        />
-        <StatCard
-          label="Soft Penalty Score"
-          value={`${summary.soft_penalties?.total || 339} Pts`}
-          subtext="Minimized faculty avoid & gaps"
-          icon={<PieChart className="w-4 h-4" />}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Day-wise Distribution Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Daily Teaching Hours Distribution</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {daysDist.map((d: any) => (
-              <div key={d.day} className="space-y-1.5">
-                <div className="flex justify-between text-xs font-medium">
-                  <span className="text-slate-200">{d.day}</span>
-                  <span className="text-slate-400 font-mono">{d.hours} hours ({d.sessions} sessions)</span>
-                </div>
-                <div className="w-full h-2 rounded-full bg-surface-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400"
-                    style={{ width: `${Math.min((d.hours / 60) * 100, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Soft Penalties Breakdown Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>CP-SAT Soft Penalties Breakdown (Objective)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-muted border border-surface-border text-xs">
-              <span className="text-slate-300">S1 — Faculty Avoid Preferences</span>
-              <span className="font-semibold text-emerald-400 font-mono">0 pts (Perfect)</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-muted border border-surface-border text-xs">
-              <span className="text-slate-300">S2 — Student Group Idle Gaps</span>
-              <span className="font-semibold text-slate-200 font-mono">{summary.soft_penalties?.S2_group_gaps || 69} pts</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-muted border border-surface-border text-xs">
-              <span className="text-slate-300">S3 — Group Daily Overload (&gt;6h)</span>
-              <span className="font-semibold text-slate-200 font-mono">{summary.soft_penalties?.S3_group_overload || 87} pts</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-muted border border-surface-border text-xs">
-              <span className="text-slate-300">S4 — Same Course Repeat in Day</span>
-              <span className="font-semibold text-slate-200 font-mono">{summary.soft_penalties?.S4_course_repeat || 183} pts</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-muted border border-surface-border text-xs">
-              <span className="text-slate-300">S5 — Room Capacity Waste (&lt;40%)</span>
-              <span className="font-semibold text-emerald-400 font-mono">0 pts (Efficient)</span>
-            </div>
-            <div className="flex items-center justify-between p-3 rounded-lg bg-surface-muted border border-surface-border text-xs">
-              <span className="text-slate-300">S6 — Period 9 Fatigue Slot</span>
-              <span className="font-semibold text-emerald-400 font-mono">0 pts (Avoided)</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Top Utilized Venues */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Utilized Campus Venues</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="py-12 text-center text-slate-400 flex flex-col items-center gap-3">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
-              <p className="text-xs">Computing analytics...</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-surface-border text-[11px] uppercase tracking-wider text-slate-400">
-                    <th className="py-2 px-3">Rank</th>
-                    <th className="py-2 px-3">Room ID & Name</th>
-                    <th className="py-2 px-3">Type</th>
-                    <th className="py-2 px-3">Capacity</th>
-                    <th className="py-2 px-3">Weekly Hours</th>
-                    <th className="py-2 px-3">Utilization</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-border/50 text-xs text-slate-300">
-                  {topVenues.slice(0, 8).map((r: any, idx: number) => (
-                    <tr key={r.room_id} className="hover:bg-surface-elevated/40">
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-400">#{idx + 1}</td>
-                      <td className="py-2.5 px-3 font-semibold text-slate-100">
-                        <span className="text-blue-400 font-mono">{r.room_id}</span> — {r.name}
-                      </td>
-                      <td className="py-2.5 px-3 capitalize text-slate-400">{r.type?.replace("_", " ")}</td>
-                      <td className="py-2.5 px-3 font-mono">{r.capacity} seats</td>
-                      <td className="py-2.5 px-3 font-mono text-cyan-400">{r.hours}h / 45h</td>
-                      <td className="py-2.5 px-3 font-mono font-semibold text-emerald-400">{r.utilization_rate}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </AppShell>
-  );
+    <Card><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><DoorClosed className="h-4 w-4 text-blue-400" />Room utilization</CardTitle></CardHeader><CardContent>{loading ? <div className="py-10 text-center text-xs text-slate-400">Loading room use…</div> : <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead className="text-[11px] uppercase text-slate-400"><tr><th className="py-2">Room</th><th>Type</th><th>Capacity</th><th>Hours booked</th><th>Utilization</th></tr></thead><tbody className="divide-y divide-surface-border/50">{venues.map((room: any) => <tr key={room.room_id}><td className="py-2 font-medium text-slate-100">{room.room_id} · {room.name}</td><td className="capitalize">{room.type?.replaceAll("_", " ")}</td><td>{room.capacity}</td><td>{room.hours} / 45</td><td className="font-mono text-cyan-300">{room.utilization_rate}%</td></tr>)}</tbody></table></div>}</CardContent></Card>
+  </AppShell>;
 }

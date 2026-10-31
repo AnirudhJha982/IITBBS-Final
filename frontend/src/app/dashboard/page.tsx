@@ -77,8 +77,8 @@ export default function DashboardPage() {
       setGenerating(true);
       setStatusMessage("Running Google OR-Tools CP-SAT Solver...");
       const res = await fetchBackend("/timetable/generate", { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
         setStatusMessage(
           data.message || "Timetable optimized successfully with 0 hard violations!"
         );
@@ -86,10 +86,10 @@ export default function DashboardPage() {
       } else if (res.status === 403) {
         setStatusMessage("Permission denied: only Coordinators and Admins can generate.");
       } else {
-        setStatusMessage("Generation request completed.");
+        setStatusMessage(data.message || "The solver did not update the active schedule.");
       }
     } catch {
-      setStatusMessage("Solver execution finished.");
+      setStatusMessage("The solver could not be reached; the active schedule was left unchanged.");
     } finally {
       setGenerating(false);
     }
@@ -116,18 +116,22 @@ export default function DashboardPage() {
 
   const handleBookingAction = async (requestId: string, action: "approve" | "reject") => {
     try {
+      const reason = window.prompt(`Enter a reason to ${action} ${requestId}:`);
+      if (!reason?.trim()) return;
       const res = await fetchBackend(`/bookings/${action}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request_id: requestId }),
+        body: JSON.stringify({ request_id: requestId, reason }),
       });
       const data = await res.json();
-      if (data.success) {
-        setActionMsg(`Booking ${requestId} has been ${action === "approve" ? "approved" : "rejected"}.`);
+      if (res.ok && data.success) {
+        setActionMsg(data.message || `Booking ${requestId} updated.`);
         await loadStats();
+      } else {
+        setActionMsg(typeof data.message === "string" ? data.message : "Booking action failed; no decision was saved.");
       }
     } catch {
-      setActionMsg("Network error updating booking.");
+      setActionMsg("Network error updating booking; no decision was saved.");
     }
   };
 
@@ -543,14 +547,14 @@ export default function DashboardPage() {
   }
 
   // ── 4. DEPARTMENT HEAD VIEW ────────────────────────────────────────────────
-  if (role === "department_head") {
+  if (role === "department_head" || role === "department_coordinator") {
     const deptFaculty: any[] = stats?.dept_faculty || [];
 
     return (
       <AppShell>
         <PageHeader
           title={`Department Dashboard — ${stats?.department || user?.department || "ECE"}`}
-          description={`Faculty workload monitoring & departmental course schedules · HoD Portal`}
+          description={`Faculty workload monitoring & departmental course schedules · ${role === "department_coordinator" ? "Coordinator" : "HoD"} Portal`}
           badge="Academic Year 2026-27"
           actions={
             <Link href="/timetable">
@@ -641,6 +645,9 @@ export default function DashboardPage() {
         badge="Academic Year 2026-27"
         actions={
           <>
+            {role === "super_admin" && (
+              <Link href="/admin/dataset"><Button variant="outline" size="sm"><FileSpreadsheet className="mr-1.5 h-4 w-4" />Manage Dataset</Button></Link>
+            )}
             {canExport && (
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <FileSpreadsheet className="w-4 h-4 mr-1.5 text-emerald-400" />

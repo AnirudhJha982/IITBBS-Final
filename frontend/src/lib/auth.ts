@@ -22,8 +22,10 @@ export type UserRole =
   | "super_admin"
   | "timetable_coordinator"
   | "academic_dean"
+  | "department_coordinator"
   | "department_head"
   | "faculty"
+  | "club_representative"
   | "venue_manager"
   | "student_representative";
 
@@ -84,6 +86,16 @@ const USER_STORE: Record<string, { hash: string; user: AuthUser }> = {
       department: "ECE",
     },
   },
+  "dept.coordinator@chitkara.edu.in": {
+    hash: sha256("DeptCoord@2026"),
+    user: {
+      userId: "usr-008",
+      email: "dept.coordinator@chitkara.edu.in",
+      name: "Prof. Neha Das",
+      role: "department_coordinator",
+      department: "ECE",
+    },
+  },
   "faculty@chitkara.edu.in": {
     hash: sha256("Faculty@2026"),
     user: {
@@ -113,6 +125,16 @@ const USER_STORE: Record<string, { hash: string; user: AuthUser }> = {
       role: "student_representative",
       department: "CSE",
       entityId: "CSE-2",
+    },
+  },
+  "club@chitkara.edu.in": {
+    hash: sha256("Club@2026"),
+    user: {
+      userId: "usr-009",
+      email: "club@chitkara.edu.in",
+      name: "Aarav Sen",
+      role: "club_representative",
+      entityId: "Coding Club",
     },
   },
 };
@@ -185,8 +207,10 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: "Super Administrator",
   timetable_coordinator: "Timetable Coordinator",
   academic_dean: "Academic Dean",
+  department_coordinator: "Department Coordinator",
   department_head: "Department Head",
   faculty: "Faculty Member",
+  club_representative: "Club Representative",
   venue_manager: "Venue Manager",
   student_representative: "Student Representative",
 };
@@ -195,8 +219,10 @@ export const ROLE_INITIALS: Record<UserRole, string> = {
   super_admin: "SA",
   timetable_coordinator: "TC",
   academic_dean: "AD",
+  department_coordinator: "DC",
   department_head: "DH",
   faculty: "FM",
+  club_representative: "CR",
   venue_manager: "VM",
   student_representative: "SR",
 };
@@ -205,8 +231,10 @@ export const ROLE_HOME: Record<UserRole, string> = {
   super_admin: "/dashboard",
   timetable_coordinator: "/dashboard",
   academic_dean: "/dashboard",
+  department_coordinator: "/dashboard",
   department_head: "/dashboard",
   faculty: "/timetable",
+  club_representative: "/venue-bookings",
   venue_manager: "/venue-bookings",
   student_representative: "/timetable",
 };
@@ -224,16 +252,19 @@ export const PERMISSIONS = {
     ["super_admin", "academic_dean", "venue_manager"].includes(r),
   canManageRooms: (r: UserRole) =>
     ["super_admin", "venue_manager"].includes(r),
-  canViewAnalytics: (r: UserRole) => r !== "student_representative",
+  canViewAnalytics: (r: UserRole) =>
+    !["student_representative", "club_representative"].includes(r),
   canManageUsers: (r: UserRole) => r === "super_admin",
   canManageSettings: (r: UserRole) => r === "super_admin",
   canManualSchedule: (r: UserRole) =>
     ["super_admin", "timetable_coordinator"].includes(r),
   canReschedule: (r: UserRole) =>
     ["super_admin", "timetable_coordinator", "academic_dean"].includes(r),
-  canViewFaculty: (r: UserRole) => r !== "student_representative",
+  canViewFaculty: (r: UserRole) =>
+    !["student_representative", "club_representative"].includes(r),
   canViewApprovals: (r: UserRole) =>
     ["super_admin", "academic_dean", "venue_manager"].includes(r),
-  canRequestBooking: (r: UserRole) => r !== "student_representative",
+  canRequestBooking: (r: UserRole) =>
+    ["super_admin", "department_coordinator", "faculty", "club_representative", "venue_manager"].includes(r),
 };
 

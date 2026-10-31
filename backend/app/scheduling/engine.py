@@ -33,8 +33,9 @@ class SchedulingEngine:
     def __init__(self, time_limit_seconds: int = 120, num_workers: int = 8):
         self.time_limit_seconds = time_limit_seconds
         self.num_workers = num_workers
+        self.last_solver_status = "NOT_RUN"
 
-    def solve_master_timetable(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def solve_master_timetable(self, data: Dict[str, Any], baseline_schedule: Optional[Dict[str, Any]] = None, minimize_movement: bool = False) -> Dict[str, Any]:
         """
         Formulates and solves the weekly master timetable for all 189 sessions.
         Returns a dictionary mapping session_id -> {day, start_period, room_id}.
@@ -48,6 +49,11 @@ class SchedulingEngine:
         faculty = {f["id"]: f for f in data["faculty"]}
         groups = {g["id"]: g for g in data["student_groups"]}
         sessions = data["sessions"]
+        baseline_slots = {
+            item["session_id"]: item
+            for item in (baseline_schedule or {}).get("sessions", [])
+            if item.get("session_id")
+        }
 
         # Map faculty & room unavailabilities
         fac_unavail = defaultdict(set)
@@ -141,6 +147,12 @@ class SchedulingEngine:
                 vars_for_s.append(v)
             # Exactly one placement per session (H1)
             model.add_exactly_one(vars_for_s)
+            old = baseline_slots.get(sid)
+            if old:
+                preferred_idx = next((idx for idx, pl in enumerate(session_placements[sid]) if pl == (old.get("day"), old.get("start_period"), old.get("room_id"))), None)
+                if preferred_idx is not None:
+                    for idx, variable in enumerate(vars_for_s):
+                        model.add_hint(variable, 1 if idx == preferred_idx else 0)
 
         # H4: No room double-booking
         # Map (room_id, day, period) -> list of bool vars
@@ -231,6 +243,17 @@ class SchedulingEngine:
         # Objective Function: Minimize Soft Penalties
         objective_terms = []
 
+        # Rescheduling uses a dominant cost to minimize the number of sessions
+        # whose day, period, or room differs from the previous schedule.
+        if minimize_movement:
+            for s in sessions:
+                old = baseline_slots.get(s["id"])
+                if not old:
+                    continue
+                for idx, (d, p, rid) in enumerate(session_placements[s["id"]]):
+                    if (d, p, rid) != (old.get("day"), old.get("start_period"), old.get("room_id")):
+                        objective_terms.append(var_assign[(s["id"], idx)] * 100_000)
+
         # S1: Faculty avoided preferences (cost 2 per hour)
         for s in sessions:
             sid = s["id"]
@@ -274,8 +297,8 @@ class SchedulingEngine:
         solver.parameters.max_time_in_seconds = float(self.time_limit_seconds)
         solver.parameters.num_workers = self.num_workers
         solver.parameters.log_search_progress = False
-
         status = solver.solve(model)
+        self.last_solver_status = solver.status_name(status)
         logger.info(f"Master Timetable CP-SAT solve status: {solver.status_name(status)} in {solver.wall_time:.2f}s")
 
         if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
@@ -593,11 +616,11 @@ class SchedulingEngine:
             "session_overrides": overrides,
         }
 
-    def generate_full_schedule(self, data: Dict[str, Any], team_name: str = "CampusOS AI") -> Dict[str, Any]:
+    def generate_full_schedule(self, data: Dict[str, Any], team_name: str = "CampusOS AI", baseline_schedule: Optional[Dict[str, Any]] = None, minimize_movement: bool = False) -> Dict[str, Any]:
         """
         Orchestrates master timetable, exams, and Spectra bookings into complete schedule.json.
         """
-        master_sessions = self.solve_master_timetable(data)
+        master_sessions = self.solve_master_timetable(data, baseline_schedule, minimize_movement)
         exams_schedule = self.solve_examination_schedule(data)
         fest_week = self.solve_spectra_bookings(data, master_sessions)
 

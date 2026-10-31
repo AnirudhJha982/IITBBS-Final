@@ -9,6 +9,7 @@ import { createHash, createHmac } from "crypto";
 const citData = JSON.parse(fs.readFileSync("./frontend/src/data/cit_public.json", "utf-8"));
 const schedule = JSON.parse(fs.readFileSync("./frontend/src/data/schedule.json", "utf-8"));
 const scheduleAfter = JSON.parse(fs.readFileSync("./frontend/src/data/schedule_after.json", "utf-8"));
+const authSource = fs.readFileSync("./frontend/src/lib/auth.ts", "utf-8");
 
 let passed = 0;
 let failed = 0;
@@ -49,20 +50,24 @@ function verifyToken(token) {
   }
 }
 
-console.log("\n=== 1. CREDENTIAL VERIFICATION & ENCRYPTION TESTS ===");
+console.log("\n=== 1. DEMO ACCOUNT DEFINITION CHECKS ===");
 const rolesToTest = [
   { role: "super_admin", email: "admin@chitkara.edu.in", pass: "Admin@2026" },
   { role: "timetable_coordinator", email: "coordinator@chitkara.edu.in", pass: "Coord@2026" },
   { role: "academic_dean", email: "dean@chitkara.edu.in", pass: "Dean@2026" },
+  { role: "department_coordinator", email: "dept.coordinator@chitkara.edu.in", pass: "DeptCoord@2026" },
   { role: "department_head", email: "hod@chitkara.edu.in", pass: "HoD@2026" },
   { role: "faculty", email: "faculty@chitkara.edu.in", pass: "Faculty@2026" },
+  { role: "club_representative", email: "club@chitkara.edu.in", pass: "Club@2026" },
   { role: "venue_manager", email: "venues@chitkara.edu.in", pass: "Venue@2026" },
   { role: "student_representative", email: "student@chitkara.edu.in", pass: "Student@2026" },
 ];
 
 for (const cred of rolesToTest) {
   const hashed = sha256(cred.pass);
-  assert(hashed.length === 64, `Password hashed securely using SHA-256 for [${cred.role}]`);
+  assert(authSource.includes(`"${cred.email}"`), `Demo account is present for [${cred.role}]`);
+  assert(authSource.includes(`role: "${cred.role}"`), `Account is assigned [${cred.role}]`);
+  assert(hashed.length === 64, `SHA-256 password digest has the expected format for [${cred.role}]`);
 }
 
 console.log("\n=== 2. HMAC-SHA256 TOKEN & INTEGRITY TESTS ===");

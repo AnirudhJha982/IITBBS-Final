@@ -52,10 +52,15 @@ class Settings(BaseSettings):
         is_serverless = os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("LAMBDA_TASK_ROOT")
         if is_serverless and url.startswith("sqlite") and "/tmp" not in url:
             return "sqlite+aiosqlite:////tmp/campusos_local.db"
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+asyncpg://", 1)
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
 
     # Security & Tokens
     SECRET_KEY: str = "development-temporary-secret-key-must-be-rotated-for-production-min32char"
+    CAMPUSOS_AUTH_SECRET: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
 

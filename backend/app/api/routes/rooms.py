@@ -2,17 +2,19 @@
 CampusOS AI - Rooms and Venues API Routes
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from backend.app.core.auth import CurrentUser, get_current_user
+from backend.app.services.app_state import read_state
 from backend.app.services.schedule_loader import ScheduleLoader
 
 router = APIRouter(prefix="/rooms", tags=["Rooms"])
 
 
 @router.get("/")
-async def get_all_rooms():
+async def get_all_rooms(current_user: CurrentUser = Depends(get_current_user)):
     """Returns all 27 official campus rooms with utilization metrics."""
-    data = ScheduleLoader.load_dataset()
-    schedule = ScheduleLoader.load_baseline_schedule()
+    data = await read_state("official_dataset") or ScheduleLoader.load_dataset()
+    schedule = await read_state("active_schedule") or ScheduleLoader.load_baseline_schedule()
 
     rooms = data.get("rooms", [])
     scheduled = schedule.get("sessions", [])
@@ -54,10 +56,10 @@ async def get_all_rooms():
 
 
 @router.get("/{room_id}")
-async def get_room_details(room_id: str):
+async def get_room_details(room_id: str, current_user: CurrentUser = Depends(get_current_user)):
     """Returns detailed information and weekly timetable for a specific room."""
-    data = ScheduleLoader.load_dataset()
-    schedule = ScheduleLoader.load_baseline_schedule()
+    data = await read_state("official_dataset") or ScheduleLoader.load_dataset()
+    schedule = await read_state("active_schedule") or ScheduleLoader.load_baseline_schedule()
 
     room = next((r for r in data.get("rooms", []) if r["id"] == room_id), None)
     if not room:

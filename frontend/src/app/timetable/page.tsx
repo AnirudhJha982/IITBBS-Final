@@ -93,17 +93,19 @@ export default function TimetablePage() {
       setGenerating(true);
       setMessage("Running CP-SAT Solver optimization...");
       const res = await fetchBackend("/timetable/generate", { method: "POST" });
-      if (res.ok) {
-        const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
         setMessage(
           data.message || "Timetable optimized with 0 hard violations!"
         );
         await loadTimetable();
       } else if (res.status === 403) {
         setMessage("You do not have permission to generate the timetable.");
+      } else {
+        setMessage(typeof data.message === "string" ? data.message : "The solver did not update the active timetable.");
       }
     } catch {
-      setMessage("Generation request completed.");
+      setMessage("The solver could not be reached; the active timetable was left unchanged.");
     } finally {
       setGenerating(false);
     }

@@ -2,8 +2,10 @@ export type UserRole =
   | "super_admin"
   | "academic_dean"
   | "timetable_coordinator"
+  | "department_coordinator"
   | "department_head"
   | "faculty"
+  | "club_representative"
   | "student_representative"
   | "venue_manager";
 

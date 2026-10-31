@@ -82,7 +82,7 @@ class ReschedulingEngine:
 
         # Solve master timetable for repaired dataset
         # We can bias the solver to stay as close to baseline as possible
-        repaired_master = engine.solve_master_timetable(repaired_data)
+        repaired_master = engine.solve_master_timetable(repaired_data, baseline_schedule, minimize_movement=True)
 
         # Spectra bookings evaluation on repaired schedule
         fest_week = engine.solve_spectra_bookings(repaired_data, repaired_master)

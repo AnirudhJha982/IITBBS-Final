@@ -176,3 +176,11 @@ class AuditLog(Base, TimestampMixin):
     entity_type: Mapped[str] = mapped_column(String(50), nullable=False)
     entity_id: Mapped[str] = mapped_column(String(100), nullable=False)
     details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class ApplicationState(Base, TimestampMixin):
+    """Durable JSON snapshots for the active schedule and booking workflow."""
+    __tablename__ = "application_state"
+
+    key: Mapped[str] = mapped_column(String(128), primary_key=True)
+    value: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)

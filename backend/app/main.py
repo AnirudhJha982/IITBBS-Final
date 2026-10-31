@@ -4,6 +4,7 @@ Production-ready configuration with CORS, structured error handling, logging, an
 """
 
 import sys
+import os
 from pathlib import Path
 
 # Add project root so 'backend.app' can be imported whether run from root or backend/
@@ -30,6 +31,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from backend.app.core.config import settings
 from backend.app.core.logging import logger
 from backend.app.api.router import api_router
+from backend.app.services.app_state import ensure_state_table, seed_state
 
 
 @asynccontextmanager
@@ -38,6 +40,26 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"Starting {settings.APP_NAME} v{settings.APP_VERSION}")
     logger.info(f"Environment: {settings.ENVIRONMENT} | Debug: {settings.DEBUG}")
     logger.info(f"AI Provider configured: {settings.AI_PROVIDER} | Solver: Google OR-Tools CP-SAT")
+
+    if (os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME") or os.environ.get("LAMBDA_TASK_ROOT")) and settings.DATABASE_URL.startswith("sqlite"):
+        raise RuntimeError("Persistent workflows require a configured PostgreSQL DATABASE_URL in production.")
+
+    # Keep only the small workflow state table under app control; the official
+    # domain tables continue to be managed by Alembic migrations.
+    try:
+        await ensure_state_table()
+        from backend.app.services.schedule_loader import ScheduleLoader
+        dataset = ScheduleLoader.load_dataset()
+        baseline = ScheduleLoader.load_baseline_schedule()
+        if dataset and baseline:
+            await seed_state("active_schedule", baseline)
+            await seed_state("official_dataset", dataset)
+            await seed_state("venue_bookings", _initial_booking_state(dataset, baseline))
+        logger.info("Durable workflow state is ready.")
+    except Exception as e:
+        logger.exception(f"Persistent workflow state could not be initialized: {e}")
+        if settings.ENVIRONMENT == "production":
+            raise
     
     # Pre-warm ScheduleLoader in memory (instant JSON parse, 0 cold-start latency)
     try:
@@ -51,6 +73,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
 
     logger.info("CampusOS AI service is shutting down gracefully.")
+
+
+def _initial_booking_state(dataset: dict, schedule: dict) -> dict:
+    definitions = {item["id"]: item for item in dataset.get("booking_requests", [])}
+    decisions = schedule.get("fest_week", {}).get("bookings", [])
+    bookings = []
+    for decision in decisions:
+        definition = definitions.get(decision.get("request_id"), {})
+        bookings.append({**definition, **decision, "request_id": decision.get("request_id")})
+    return {"bookings": bookings}
 
 
 app = FastAPI(

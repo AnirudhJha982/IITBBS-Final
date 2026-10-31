@@ -54,6 +54,7 @@ node_modules/
 .pnp
 .pnp.js
 frontend/.next/
+frontend/campusos-build/
 frontend/out/
 frontend/build/
 .next/
@@ -85,3 +86,7 @@ exports/*
 !exports/.gitkeep
 !exports/schedule.json
 !exports/schedule_after.json
+
+.vercel
+.env*
+!.env.example

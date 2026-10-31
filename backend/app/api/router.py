@@ -15,6 +15,7 @@ from backend.app.api.routes import (
     rescheduling,
     analytics,
     assistant,
+    dataset,
 )
 
 api_router = APIRouter()
@@ -30,3 +31,4 @@ api_router.include_router(bookings.router)
 api_router.include_router(rescheduling.router)
 api_router.include_router(analytics.router)
 api_router.include_router(assistant.router)
+api_router.include_router(dataset.router)

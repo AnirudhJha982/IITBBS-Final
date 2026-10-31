@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { AppShell } from "@/components/shared/AppShell";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { fetchBackend } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import {
   Sliders,
   CheckCircle2,
@@ -20,60 +22,78 @@ import {
 } from "lucide-react";
 
 export default function ManualSchedulingPage() {
-  const [selectedSession, setSelectedSession] = useState("MA101-AB-L1");
+  const { role } = useAuth();
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [selectedSession, setSelectedSession] = useState("");
   const [selectedDay, setSelectedDay] = useState("MON");
   const [selectedPeriod, setSelectedPeriod] = useState(1);
-  const [selectedRoom, setSelectedRoom] = useState("LH-1");
+  const [selectedRoom, setSelectedRoom] = useState("");
   const [validationResult, setValidationResult] = useState<{
     valid: boolean;
     conflicts: string[];
     details: string;
   } | null>(null);
 
-  const sampleSessions = [
-    { id: "MA101-AB-L1", course: "MA101 Calculus", faculty: "F19", groups: "Y1-A, Y1-B", size: 180, duration: 1 },
-    { id: "PH101-CD-L1", course: "PH101 Physics", faculty: "F11", groups: "Y1-C, Y1-D", size: 180, duration: 1 },
-    { id: "CS201-CSE-L1", course: "CS201 Data Structures", faculty: "F01", groups: "CSE-2", size: 80, duration: 1 },
-    { id: "EC201-ECE-L1", course: "EC201 Analog Circuits", faculty: "F12", groups: "ECE-2", size: 75, duration: 1 },
-    { id: "CS201-LAB1", course: "CS201 DS Lab", faculty: "F01", groups: "CSE-2", size: 80, duration: 3 },
-  ];
-
-  const rooms = ["LH-1", "LH-2", "LH-3", "AUD", "CR-101", "CR-102", "CS-LAB1", "ELEC-LAB1"];
   const days = ["MON", "TUE", "WED", "THU", "FRI"];
   const periods = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const canSchedule = role === "super_admin" || role === "timetable_coordinator";
 
-  const handleValidate = () => {
-    const conflicts: string[] = [];
-    const ses = sampleSessions.find((s) => s.id === selectedSession);
-
-    // Rule 1: Lunch span constraint (cannot span across P5 to P6)
-    if (ses && ses.duration > 1 && selectedPeriod <= 5 && selectedPeriod + ses.duration - 1 > 5) {
-      conflicts.push(`Hard Constraint Violation (H6): Multi-period session spans across lunch break (P5 to P6).`);
+  const loadOptions = async () => {
+    setLoading(true);
+    try {
+      const [scheduleResponse, roomResponse] = await Promise.all([
+        fetchBackend("/timetable/"),
+        fetchBackend("/rooms/"),
+      ]);
+      const [scheduleData, roomData] = await Promise.all([scheduleResponse.json(), roomResponse.json()]);
+      const rows = scheduleData.sessions || [];
+      setSessions(rows);
+      setRooms(roomData.rooms || []);
+      if (rows.length && !selectedSession) setSelectedSession(rows[0].session_id);
+      if (roomData.rooms?.length && !selectedRoom) setSelectedRoom(roomData.rooms[0].id);
+    } catch {
+      setValidationResult({ valid: false, conflicts: ["Could not load the current schedule and official rooms."], details: "The manual scheduler is unavailable until the schedule data loads." });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Rule 2: Lab starting period (labs must start at P2 or P6)
-    if (ses && ses.duration === 3 && selectedPeriod !== 2 && selectedPeriod !== 6) {
-      conflicts.push(`Hard Constraint Violation (H7): 3-hour laboratory block must start at P2 (09:00) or P6 (14:00).`);
-    }
+  useEffect(() => { void loadOptions(); }, []);
 
-    // Rule 3: Capacity check
-    if (ses && ses.size > 150 && (selectedRoom.startsWith("CR") || selectedRoom.includes("LAB"))) {
-      conflicts.push(`Hard Constraint Violation (H4): Venue ${selectedRoom} cannot accommodate ${ses.size} students.`);
-    }
-
-    // Result
-    if (conflicts.length > 0) {
-      setValidationResult({
-        valid: false,
-        conflicts,
-        details: `Slotting ${selectedSession} on ${selectedDay} at P${selectedPeriod} in ${selectedRoom} fails canonical constraints.`,
+  const handleValidate = async () => {
+    try {
+      const response = await fetchBackend("/timetable/validate-slot", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: selectedSession, day: selectedDay, start_period: selectedPeriod, room_id: selectedRoom }),
       });
-    } else {
+      const data = await response.json();
       setValidationResult({
-        valid: true,
-        conflicts: [],
-        details: `Slotting ${selectedSession} on ${selectedDay} at P${selectedPeriod} in ${selectedRoom} is 100% clash-free!`,
+        valid: Boolean(data.valid),
+        conflicts: data.conflicts || (response.ok ? [] : [data.message || "Validation failed."]),
+        details: data.message || (data.valid ? "Placement passed hard-constraint validation." : "Resolve the conflicts before saving."),
       });
+    } catch {
+      setValidationResult({ valid: false, conflicts: ["The validation service could not be reached."], details: "No schedule change was saved." });
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const response = await fetchBackend("/timetable/manual", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: selectedSession, day: selectedDay, start_period: selectedPeriod, room_id: selectedRoom }),
+      });
+      const data = await response.json();
+      setValidationResult({ valid: Boolean(data.valid), conflicts: data.conflicts || [], details: data.message || "Manual placement was not saved." });
+      if (data.success) await loadOptions();
+    } catch {
+      setValidationResult({ valid: false, conflicts: ["The schedule service could not be reached."], details: "No schedule change was saved." });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -81,8 +101,8 @@ export default function ManualSchedulingPage() {
     <AppShell>
       <PageHeader
         title="Manual Scheduling & Real-Time Constraint Validation"
-        description="Interactive manual slot placement with instant Google OR-Tools CP-SAT conflict verification (H1-H14)"
-        badge="Zero-Conflict Validator"
+        description="Place a real dataset session; the server checks conflicts against the active timetable before saving."
+        badge={canSchedule ? "Authorized editor" : "Read only"}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -90,7 +110,7 @@ export default function ManualSchedulingPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
             <div>
-              <p className="text-xs font-semibold text-emerald-400">Hard Constraints (H1-H14)</p>
+              <p className="text-xs font-semibold text-emerald-400">Conflict checks</p>
               <p className="text-[11px] text-slate-400">Zero room, faculty, or cohort overlap</p>
             </div>
           </CardContent>
@@ -109,7 +129,7 @@ export default function ManualSchedulingPage() {
             <AlertTriangle className="w-5 h-5 text-amber-400" />
             <div>
               <p className="text-xs font-semibold text-amber-400">Time & Lab Boundaries</p>
-              <p className="text-[11px] text-slate-400">Lunch P5 break & lab P2/P6 start gates</p>
+              <p className="text-[11px] text-slate-400">Lunch, allowed lab starts, and faculty availability</p>
             </div>
           </CardContent>
         </Card>
@@ -132,9 +152,9 @@ export default function ManualSchedulingPage() {
                 onChange={(e) => setSelectedSession(e.target.value)}
                 className="w-full h-9 px-3 rounded-lg border border-surface-border bg-surface-muted text-xs text-slate-200"
               >
-                {sampleSessions.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.id} · {s.course} ({s.duration}h)
+                {sessions.map((s) => (
+                  <option key={s.session_id} value={s.session_id}>
+                    {s.session_id} · {s.course_title} ({s.duration}h)
                   </option>
                 ))}
               </select>
@@ -176,7 +196,7 @@ export default function ManualSchedulingPage() {
                 className="w-full h-9 px-3 rounded-lg border border-surface-border bg-surface-muted text-xs text-slate-200"
               >
                 {rooms.map((r) => (
-                  <option key={r} value={r}>{r}</option>
+                  <option key={r.id} value={r.id}>{r.id} · {r.name} ({r.capacity})</option>
                 ))}
               </select>
             </div>
@@ -186,10 +206,12 @@ export default function ManualSchedulingPage() {
               size="md"
               className="w-full text-xs mt-2"
               onClick={handleValidate}
+              disabled={loading || !selectedSession || !selectedRoom || !canSchedule}
             >
               <Sparkles className="w-4 h-4 mr-1.5" />
-              Run Conflict Validation
+              {loading ? "Loading official schedule…" : "Validate placement"}
             </Button>
+            {!canSchedule && <p className="text-[11px] text-amber-300">Only an administrator or timetable coordinator can save manual placements.</p>}
           </CardContent>
         </Card>
 
@@ -218,7 +240,7 @@ export default function ManualSchedulingPage() {
                   )}
                   <div>
                     <p className="text-xs font-semibold">
-                      {validationResult.valid ? "Validation Passed (Zero Clashes)" : "Constraint Conflict Detected"}
+                    {validationResult.valid ? "Validation Passed" : "Constraint Conflict Detected"}
                     </p>
                     <p className="text-xs mt-1 text-slate-300">{validationResult.details}</p>
                     {validationResult.conflicts.length > 0 && (
@@ -230,6 +252,12 @@ export default function ManualSchedulingPage() {
                     )}
                   </div>
                 </div>
+
+                {validationResult.valid && canSchedule && (
+                  <Button variant="cyan" size="sm" onClick={handleSave} disabled={saving}>
+                    {saving ? "Saving…" : "Save validated placement"}
+                  </Button>
+                )}
 
                 <div className="p-3.5 rounded-lg bg-surface-muted border border-surface-border text-xs text-slate-300 space-y-2">
                   <p className="font-semibold text-slate-200">Session Profile:</p>

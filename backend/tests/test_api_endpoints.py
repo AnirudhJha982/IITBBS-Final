@@ -85,7 +85,8 @@ async def test_rescheduling_status():
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
-        assert data["status"] == "REPAIRED_OPTIMAL"
+    assert data["status"] == "NO_PENDING_PROPOSAL"
+    assert data["pending_proposal"] is None
 
 
 @pytest.mark.asyncio

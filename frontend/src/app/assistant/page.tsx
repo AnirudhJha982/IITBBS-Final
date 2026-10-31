@@ -70,11 +70,12 @@ export default function AssistantPage() {
         const data = await res.json();
         setMessages((prev) => [...prev, { sender: "assistant", text: data.reply }]);
       } else {
+        const error = await res.json().catch(() => ({}));
         setMessages((prev) => [
           ...prev,
           {
             sender: "assistant",
-            text: "Sorry, I encountered an issue reaching the scheduling backend. Please try again.",
+            text: typeof error.message === "string" ? error.message : "That request could not be completed. No schedule change was made.",
           },
         ]);
       }
@@ -96,7 +97,7 @@ export default function AssistantPage() {
       <PageHeader
         title="AI Campus Scheduling Assistant"
         description="Natural language queries over Chitkara campus timetable, rooms, faculty, and venue availability"
-        badge="English & Hinglish Support"
+        badge="English & Hinglish Prompts"
         actions={
           <div className="flex items-center gap-2">
             <Badge variant="cyan" className="flex items-center gap-1">
@@ -125,7 +126,7 @@ export default function AssistantPage() {
               </div>
             </div>
             <Badge variant="success" className="text-[10px]">
-              Live Engine Active
+              Schedule Data Connected
             </Badge>
           </CardHeader>
 
@@ -223,7 +224,7 @@ export default function AssistantPage() {
                 Deterministic Guardrails
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                All assistant queries query live scheduling state verified by Google OR-Tools CP-SAT and canonical validator checks. Zero hallucinations or invalid allocations.
+                Schedule change requests produce proposals. Before an Admin can apply one, the server checks room, faculty, group, availability, capacity, lunch, lab-start, basket, and daily-load constraints.
               </p>
             </CardContent>
           </Card>

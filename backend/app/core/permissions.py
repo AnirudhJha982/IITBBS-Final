@@ -11,8 +11,10 @@ class Role(str, Enum):
     SUPER_ADMIN = "super_admin"
     ACADEMIC_DEAN = "academic_dean"
     TIMETABLE_COORDINATOR = "timetable_coordinator"
+    DEPARTMENT_COORDINATOR = "department_coordinator"
     DEPARTMENT_HEAD = "department_head"
     FACULTY = "faculty"
+    CLUB_REPRESENTATIVE = "club_representative"
     STUDENT_REP = "student_representative"
     VENUE_MANAGER = "venue_manager"
 
@@ -82,6 +84,17 @@ ROLE_PERMISSIONS: dict[Role, Set[Permission]] = {
         Permission.VIEW_ROOMS,
         Permission.REQUEST_BOOKING,
         Permission.REPORT_DISRUPTION,
+    },
+    Role.DEPARTMENT_COORDINATOR: {
+        Permission.VIEW_TIMETABLE,
+        Permission.VIEW_EXAMS,
+        Permission.VIEW_ROOMS,
+        Permission.REQUEST_BOOKING,
+        Permission.REPORT_DISRUPTION,
+    },
+    Role.CLUB_REPRESENTATIVE: {
+        Permission.VIEW_ROOMS,
+        Permission.REQUEST_BOOKING,
     },
     Role.STUDENT_REP: {
         Permission.VIEW_TIMETABLE,

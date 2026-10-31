@@ -46,6 +46,36 @@ function forbidden(permission: string) {
   );
 }
 
+async function proxyToBackend(req: NextRequest, path: string) {
+  const configuredBase = process.env.BACKEND_URL;
+  if (!configuredBase) return null;
+  const base = configuredBase.replace(/\/+$/, "").replace(/\/api\/v1$/i, "");
+  const rootRoute = ["bookings", "timetable", "examinations", "rooms", "dataset", "analytics"].includes(path);
+  const normalizedPath = rootRoute && !path.endsWith("/") ? `${path}/` : path;
+  const target = new URL(`${base}/api/v1/${normalizedPath}${req.nextUrl.search}`);
+  const headers = new Headers();
+  const cookie = req.headers.get("cookie");
+  const contentType = req.headers.get("content-type");
+  if (cookie) headers.set("cookie", cookie);
+  if (contentType) headers.set("content-type", contentType);
+  const options: RequestInit = { method: req.method, headers, cache: "no-store" };
+  if (req.method !== "GET" && req.method !== "HEAD") options.body = await req.arrayBuffer();
+  try {
+    const upstream = await fetch(target, options);
+    const responseHeaders = new Headers();
+    for (const key of ["content-type", "content-disposition", "cache-control"]) {
+      const value = upstream.headers.get(key);
+      if (value) responseHeaders.set(key, value);
+    }
+    return new NextResponse(upstream.body, { status: upstream.status, headers: responseHeaders });
+  } catch {
+    return NextResponse.json(
+      { success: false, message: "The persistent backend is temporarily unavailable. No change was saved." },
+      { status: 503 }
+    );
+  }
+}
+
 // ── Session enrichment ────────────────────────────────────────────────────────
 // schedule.json only has: session_id, day, start_period, room_id
 // We join with cit_public.json to add: course_id, kind, groups, faculty_id,
@@ -176,6 +206,34 @@ export async function GET(
         entityId: authUser.entityId,
       },
     });
+  }
+
+  if (path === "bookings" || path === "bookings/") {
+    if (!authUser) return unauthorized();
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+  }
+  if (["timetable", "timetable/", "timetable/export", "examinations", "examinations/", "rooms", "rooms/"].includes(path)) {
+    if (!authUser) return unauthorized();
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+  }
+  if (["rescheduling/status", "rescheduling/export"].includes(path)) {
+    if (!authUser) return unauthorized();
+    if (!["super_admin", "timetable_coordinator", "academic_dean"].includes(role ?? "")) return forbidden("rescheduling:view");
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+  }
+  if (["dataset", "dataset/", "dataset/export"].includes(path)) {
+    if (!authUser) return unauthorized();
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+  }
+  if (path === "analytics" || path === "analytics/") {
+    if (!authUser) return unauthorized();
+    if (["student_representative", "club_representative"].includes(role ?? "")) return forbidden("analytics:view");
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
   }
 
   // ── 1. Dashboard Stats ──────────────────────────────────────────────────
@@ -313,8 +371,11 @@ export async function GET(
       });
     }
 
-    // ── Department Head Dashboard Stats ──
-    if (role === "department_head" && authUser.department) {
+    // ── Department-scoped Dashboard Stats ──
+    if (
+      (role === "department_head" || role === "department_coordinator") &&
+      authUser.department
+    ) {
       const dept = authUser.department.toLowerCase();
       const deptFaculty = faculty.filter(
         (f: any) => (f.department || "").toLowerCase() === dept
@@ -367,6 +428,24 @@ export async function GET(
       });
     }
 
+    // ── Club Representative Dashboard Stats ──
+    if (role === "club_representative" && authUser.entityId) {
+      const myBookings = getEnrichedBookings().filter(
+        (booking) => booking.requester === authUser.entityId
+      );
+      return NextResponse.json({
+        success: true,
+        role,
+        metrics: {
+          my_requests: myBookings.length,
+          approved: myBookings.filter((booking) => booking.status === "approved").length,
+          alternatives: myBookings.filter((booking) => booking.status === "alternative_offered").length,
+          rejected: myBookings.filter((booking) => booking.status === "rejected").length,
+        },
+        recent_bookings: myBookings,
+      });
+    }
+
     // ── Super Admin / Coordinator / Academic Dean Dashboard Stats ──
     return NextResponse.json({
       success: true,
@@ -380,7 +459,7 @@ export async function GET(
         weekly_contact_hours: totalHours,
         midsem_exams: exams.length,
         venue_bookings: bookings.length,
-        total_users: 7,
+      total_users: 9,
         pending_approvals: 3,
         system_modules: 13,
       },
@@ -422,6 +501,13 @@ export async function GET(
       sessions = sessions.filter((s) =>
         (s.groups || []).includes(authUser.entityId!)
       );
+    } else if (
+      (role === "department_head" || role === "department_coordinator") &&
+      authUser.department
+    ) {
+      sessions = sessions.filter(
+        (s) => s.department?.toLowerCase() === authUser.department?.toLowerCase()
+      );
     }
 
     // Query param filters
@@ -441,8 +527,12 @@ export async function GET(
       total: getEnrichedSessions().length,
       filtered_count: sessions.length,
       sessions,
-      role_filter_applied:
-        role === "faculty" || role === "student_representative",
+      role_filter_applied: [
+        "faculty",
+        "student_representative",
+        "department_head",
+        "department_coordinator",
+      ].includes(role ?? ""),
     });
   }
 
@@ -500,7 +590,9 @@ export async function GET(
   // ── 5. Faculty List & Single Faculty ────────────────────────────────────
   if (path === "faculty" || path === "faculty/") {
     if (!authUser) return unauthorized();
-    if (role === "student_representative") return forbidden("faculty:view");
+    if (["student_representative", "club_representative"].includes(role ?? "")) {
+      return forbidden("faculty:view");
+    }
 
     const allSessions = getEnrichedSessions();
     const facHours: Record<string, number> = {};
@@ -522,7 +614,10 @@ export async function GET(
       );
     }
     // Dept head sees their dept
-    if (role === "department_head" && authUser.department) {
+    if (
+      (role === "department_head" || role === "department_coordinator") &&
+      authUser.department
+    ) {
       facultyList = facultyList.filter(
         (f: any) =>
           f.department?.toLowerCase() === authUser.department?.toLowerCase()
@@ -548,7 +643,9 @@ export async function GET(
 
   if (path.startsWith("faculty/")) {
     if (!authUser) return unauthorized();
-    if (role === "student_representative") return forbidden("faculty:view");
+    if (["student_representative", "club_representative"].includes(role ?? "")) {
+      return forbidden("faculty:view");
+    }
     const facId = path.split("/")[1];
     const fac = (citData.faculty || []).find((f: any) => f.id === facId);
     if (!fac) {
@@ -556,6 +653,16 @@ export async function GET(
         { success: false, message: `Faculty ${facId} not found` },
         { status: 404 }
       );
+    }
+    if (role === "faculty" && authUser.entityId !== facId) {
+      return forbidden("faculty:view:self");
+    }
+    if (
+      (role === "department_head" || role === "department_coordinator") &&
+      authUser.department &&
+      fac.department?.toLowerCase() !== authUser.department.toLowerCase()
+    ) {
+      return forbidden("faculty:view:department");
     }
     const facSessions = getEnrichedSessions().filter(
       (s) => s.faculty_id === facId
@@ -605,6 +712,22 @@ export async function GET(
       });
     }
 
+    // Department coordinators only see examinations involving their department.
+    if (role === "department_coordinator" && authUser.department) {
+      const departmentCourseIds = new Set(
+        (citData.courses || [])
+          .filter(
+            (course: any) =>
+              course.department?.toLowerCase() === authUser.department?.toLowerCase()
+          )
+          .map((course: any) => course.id)
+      );
+      rawExams = rawExams.filter((exam: any) => {
+        const def = examDefMap[exam.exam_id];
+        return def && (def.course_ids || []).some((id: string) => departmentCourseIds.has(id));
+      });
+    }
+
     const enrichedExams = rawExams.map((e: any) => {
       const def = examDefMap[e.exam_id] || {};
       const halfCapSum = (e.rooms || []).reduce((acc: number, rId: string) => {
@@ -629,14 +752,21 @@ export async function GET(
       slots: 12,
       exams: enrichedExams,
       examinations: enrichedExams,
-      metadata: citData.exams || [],
+      metadata: enrichedExams
+        .map((exam: any) => examDefMap[exam.exam_id])
+        .filter(Boolean),
     });
   }
 
   // ── 7. Venue Bookings ────────────────────────────────────────────────────
   if (path === "bookings" || path === "bookings/") {
     if (!authUser) return unauthorized();
-    const enrichedBookings = getEnrichedBookings();
+    let enrichedBookings = getEnrichedBookings();
+    if (role === "club_representative" && authUser.entityId) {
+      enrichedBookings = enrichedBookings.filter(
+        (booking) => booking.requester === authUser.entityId
+      );
+    }
     const approved = enrichedBookings.filter(
       (b) => b.status === "approved"
     ).length;
@@ -725,14 +855,19 @@ export async function GET(
   // ── 9. Analytics ─────────────────────────────────────────────────────────
   if (path === "analytics" || path === "analytics/") {
     if (!authUser) return unauthorized();
-    if (role === "student_representative") return forbidden("analytics:view");
+    if (["student_representative", "club_representative"].includes(role ?? "")) {
+      return forbidden("analytics:view");
+    }
 
     const rooms = citData.rooms || [];
     const sessions = getEnrichedSessions();
 
     let filteredRooms = rooms;
     // Venue manager sees all rooms; dept head sees rooms used by their dept
-    if (role === "department_head" && authUser.department) {
+    if (
+      (role === "department_head" || role === "department_coordinator") &&
+      authUser.department
+    ) {
       const deptSessions = sessions.filter(
         (s) =>
           s.department?.toLowerCase() === authUser.department?.toLowerCase()
@@ -880,6 +1015,47 @@ export async function POST(
   const authUser = getAuthUser(req);
   const role: UserRole | null = authUser?.role ?? null;
 
+  // Stateful operations are handled by the authenticated Python service and its database.
+  if (path === "bookings" || path === "bookings/" || path === "bookings/parse" || path === "bookings/approve" || path === "bookings/reject" || path === "bookings/alternative" || path === "bookings/manual") {
+    if (!authUser) return unauthorized();
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+    return NextResponse.json({ success: false, message: "Persistent booking service is not configured; no change was saved." }, { status: 503 });
+  }
+
+  if (path === "timetable/generate") {
+    if (!authUser) return unauthorized();
+    if (!["super_admin", "timetable_coordinator"].includes(role ?? "")) return forbidden("timetable:generate");
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+    return NextResponse.json({ success: false, message: "Schedule solver is unavailable; the current timetable was not changed." }, { status: 503 });
+  }
+  if (path === "timetable/validate-slot" || path === "timetable/manual") {
+    if (!authUser) return unauthorized();
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+    return NextResponse.json({ success: false, message: "Timetable validation service is unavailable; no schedule change was saved." }, { status: 503 });
+  }
+  if (["rescheduling/propose", "rescheduling/apply-disruption", "rescheduling/approve"].includes(path)) {
+    if (!authUser) return unauthorized();
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+    return NextResponse.json({ success: false, message: "Rescheduling service is unavailable; the active schedule was not changed." }, { status: 503 });
+  }
+  if (path === "dataset/upload") {
+    if (!authUser) return unauthorized();
+    if (role !== "super_admin") return forbidden("dataset:manage");
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+    return NextResponse.json({ success: false, message: "Dataset service is unavailable; the current dataset was not changed." }, { status: 503 });
+  }
+  if (path === "assistant/chat") {
+    if (!authUser) return unauthorized();
+    const upstream = await proxyToBackend(req, path);
+    if (upstream) return upstream;
+    return NextResponse.json({ success: false, message: "Assistant service is unavailable; no schedule proposal was created." }, { status: 503 });
+  }
+
   // ── 1. Timetable Generate ───────────────────────────────────────────────
   if (path === "timetable/generate") {
     if (!authUser) return unauthorized();
@@ -925,6 +1101,21 @@ export async function POST(
       return forbidden("booking:approve");
     }
     const body = await req.json().catch(() => ({}));
+    const booking = getEnrichedBookings().find(
+      (item) => item.request_id === body.request_id
+    );
+    if (!booking) {
+      return NextResponse.json(
+        { success: false, message: "Booking request was not found." },
+        { status: 404 }
+      );
+    }
+    const ownerIdentity = [authUser.email, authUser.name, authUser.entityId]
+      .filter((value): value is string => Boolean(value))
+      .map((value) => value.toLowerCase());
+    if (ownerIdentity.includes(booking.requester.toLowerCase())) {
+      return forbidden("booking:cannot-approve-own-request");
+    }
     const action = path.endsWith("approve") ? "approved" : "rejected";
     return NextResponse.json({
       success: true,

@@ -30,16 +30,30 @@ export default function VenueBookingsPage() {
   const [bookingScore] = useState(66.0);
   const [actionMsg, setActionMsg] = useState("");
   const [actioning, setActioning] = useState<string | null>(null);
+  const [requestText, setRequestText] = useState("");
+  const [draft, setDraft] = useState<any>(null);
+  const [requestBusy, setRequestBusy] = useState(false);
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [manualBusy, setManualBusy] = useState(false);
+  const [manualEvent, setManualEvent] = useState({ title: "", attendance: 40, duration_periods: 1, day: "MON", start_period: 1, room_id: "", reason: "" });
+  const [decisionInputs, setDecisionInputs] = useState<Record<string, { reason: string; day: string; period: string; room: string }>>({});
 
   const canApprove = role ? PERMISSIONS.canApproveBookings(role) : false;
+  const canRequest = role ? PERMISSIONS.canRequestBooking(role) : false;
 
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const res = await fetchBackend("/bookings/");
+      const [res, roomRes] = await Promise.all([fetchBackend("/bookings/"), fetchBackend("/rooms/")]);
       if (res.ok) {
         const data = await res.json();
         setBookings(data.bookings || []);
+      }
+      if (roomRes.ok) {
+        const roomData = await roomRes.json();
+        const availableRooms = roomData.rooms || [];
+        setRooms(availableRooms);
+        setManualEvent((current) => current.room_id || !availableRooms.length ? current : { ...current, room_id: availableRooms[0].id });
       }
     } catch (err) {
       console.error("Failed to load bookings:", err);
@@ -54,37 +68,103 @@ export default function VenueBookingsPage() {
 
   const handleDecision = async (
     requestId: string,
-    action: "approve" | "reject"
+    action: "approve" | "reject" | "alternative",
+    booking: any
   ) => {
     try {
       setActioning(requestId);
-      const endpoint = action === "approve" ? "/bookings/approve" : "/bookings/reject";
+      const endpoint = `/bookings/${action}`;
+      const inputs = decisionInputs[requestId] || { reason: "", day: "", period: "", room: "" };
       const res = await fetchBackend(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ request_id: requestId }),
+        body: JSON.stringify({
+          request_id: requestId,
+          reason: inputs.reason,
+          day: inputs.day || booking.day,
+          start_period: Number(inputs.period || booking.start_period || 0),
+          room_id: inputs.room || booking.room_id,
+        }),
       });
       const data = await res.json();
       if (data.success) {
-        setActionMsg(
-          `${requestId} has been ${action === "approve" ? "approved" : "rejected"} successfully.`
-        );
-        // Optimistically update UI
-        setBookings((prev) =>
-          prev.map((b) =>
-            b.request_id === requestId
-              ? { ...b, status: action === "approve" ? "approved" : "rejected" }
-              : b
-          )
-        );
+        setActionMsg(data.message || `${requestId} updated.`);
+        await loadBookings();
       } else {
-        setActionMsg(data.message || "Action failed.");
+        const detail = data.message;
+        setActionMsg(typeof detail === "string" ? detail : detail?.message || data.error?.details?.[0]?.msg || "Action failed; no decision was saved.");
       }
     } catch {
       setActionMsg("Network error performing action.");
     } finally {
       setActioning(null);
     }
+  };
+
+  const handleParseRequest = async () => {
+    try {
+      setRequestBusy(true);
+      const res = await fetchBackend("/bookings/parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: requestText }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Could not parse this request.");
+      setDraft(data.proposal);
+      setActionMsg(`Draft prepared for review. Please check the extracted details before submitting.`);
+    } catch (error) {
+      setActionMsg(error instanceof Error ? error.message : "Could not parse this request.");
+    } finally {
+      setRequestBusy(false);
+    }
+  };
+
+  const handleSubmitRequest = async () => {
+    try {
+      setRequestBusy(true);
+      const res = await fetchBackend("/bookings/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draft),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(typeof data.message === "string" ? data.message : "Complete all required booking fields first.");
+      setActionMsg(data.message);
+      setRequestText("");
+      setDraft(null);
+      await loadBookings();
+    } catch (error) {
+      setActionMsg(error instanceof Error ? error.message : "Booking request was not submitted.");
+    } finally {
+      setRequestBusy(false);
+    }
+  };
+
+  const handleManualSchedule = async () => {
+    try {
+      setManualBusy(true);
+      const response = await fetchBackend("/bookings/manual", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(manualEvent),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        const detail = result.message;
+        throw new Error(typeof detail === "string" ? detail : [detail?.message, ...(detail?.conflicts || [])].filter(Boolean).join(" "));
+      }
+      setActionMsg(result.message);
+      setManualEvent((current) => ({ ...current, title: "", reason: "" }));
+      await loadBookings();
+    } catch (error) {
+      setActionMsg(error instanceof Error ? error.message : "Manual event was not saved.");
+    } finally { setManualBusy(false); }
+  };
+
+  const updateDraftWindow = (field: "day" | "from_period" | "to_period", value: string | number) => {
+    const current = draft?.windows?.[0] || { day: "", from_period: 1, to_period: 13 };
+    const window = { ...current, [field]: value };
+    if (field === "from_period" && Number(window.to_period) < Number(value)) window.to_period = value as number;
+    setDraft({ ...draft, windows: [window] });
   };
 
   const approved = bookings.filter((b) => b.status === "approved").length;
@@ -117,9 +197,9 @@ export default function VenueBookingsPage() {
   return (
     <AppShell>
       <PageHeader
-        title="Venue Bookings & Spectra Event Management"
-        description="Priority-ordered booking evaluation, clash-free venue allocation, and alternative slot optimization"
-        badge="Spectra Festival 2027 — 25 Requests"
+        title={role === "club_representative" ? "My Club Venue Requests" : "Venue Bookings & Spectra Event Management"}
+        description={role === "club_representative" ? "Status and decision reasons for requests submitted by your club." : "Priority-ordered booking evaluation, clash-free venue allocation, and alternative slot optimization"}
+        badge={role === "club_representative" ? undefined : "Spectra Festival 2027 — 25 Requests"}
       />
 
       {actionMsg && (
@@ -137,9 +217,51 @@ export default function VenueBookingsPage() {
         </div>
       )}
 
+      {canRequest && (
+        <Card className="mb-6">
+          <CardHeader className="pb-3 border-b border-surface-border/50">
+            <CardTitle className="text-sm">Request a venue in English or Hinglish</CardTitle>
+            <p className="text-xs text-slate-400">We prepare a structured draft; review and edit it before submitting.</p>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-3">
+            <textarea value={requestText} onChange={(event) => setRequestText(event.target.value)} rows={3} placeholder="Example: Bhai Friday 2 baje seminar hall chahiye for 40 log, projector ke saath" className="w-full rounded-lg border border-surface-border bg-surface-muted p-3 text-xs text-slate-200" />
+            <Button size="sm" onClick={handleParseRequest} disabled={requestBusy || requestText.trim().length < 8}>{requestBusy ? "Preparing…" : "Prepare draft"}</Button>
+            {draft && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 rounded-lg border border-surface-border p-3">
+                <label className="text-xs text-slate-400">Event title<input value={draft.title || ""} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+                <label className="text-xs text-slate-400">Attendance<input type="number" min="1" value={draft.attendance ?? ""} onChange={(e) => setDraft({ ...draft, attendance: e.target.value ? Number(e.target.value) : null })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+                <label className="text-xs text-slate-400">Duration (periods)<input type="number" min="1" max="13" value={draft.duration_periods || 1} onChange={(e) => setDraft({ ...draft, duration_periods: Number(e.target.value) })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+                <label className="text-xs text-slate-400">Day<select value={draft.windows?.[0]?.day || ""} onChange={(e) => updateDraftWindow("day", e.target.value)} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100"><option value="">Choose day</option>{["MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => <option key={day} value={day}>{day}</option>)}</select></label>
+                <label className="text-xs text-slate-400">Available from P<input type="number" min="1" max="13" value={draft.windows?.[0]?.from_period || 1} onChange={(e) => updateDraftWindow("from_period", Number(e.target.value))} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+                <label className="text-xs text-slate-400">Available through P<input type="number" min="1" max="13" value={draft.windows?.[0]?.to_period || 13} onChange={(e) => updateDraftWindow("to_period", Number(e.target.value))} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+                <label className="text-xs text-slate-400">Venue type<select value={draft.room_types?.[0] || ""} onChange={(e) => setDraft({ ...draft, room_types: e.target.value ? [e.target.value] : [] })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100"><option value="">Choose type</option>{["auditorium", "seminar_hall", "lecture_hall", "classroom", "lab_cs"].map(type => <option key={type} value={type}>{type.replace("_", " ")}</option>)}</select></label>
+                <label className="text-xs text-slate-400">Needs (comma separated)<input value={(draft.needs || []).join(", ")} onChange={(e) => setDraft({ ...draft, needs: e.target.value.split(",").map((v: string) => v.trim()).filter(Boolean) })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+                <div className="sm:col-span-2 lg:col-span-3 flex items-center gap-3"><Button size="sm" onClick={handleSubmitRequest} disabled={requestBusy}>{requestBusy ? "Submitting…" : "Submit reviewed request"}</Button><button onClick={() => setDraft(null)} className="text-xs text-slate-400">Discard draft</button></div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {role === "super_admin" || role === "venue_manager" ? (
+        <Card className="mb-6 border-cyan-500/20">
+          <CardHeader className="pb-3 border-b border-surface-border/50"><CardTitle className="text-sm">Manually schedule an event</CardTitle><p className="text-xs text-slate-400">The server checks room type, capacity, timetable clashes, unavailable rooms, and priority before saving.</p></CardHeader>
+          <CardContent className="grid grid-cols-1 gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="text-xs text-slate-400">Event title<input value={manualEvent.title} onChange={(e) => setManualEvent({ ...manualEvent, title: e.target.value })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+            <label className="text-xs text-slate-400">Attendance<input type="number" min="1" value={manualEvent.attendance} onChange={(e) => setManualEvent({ ...manualEvent, attendance: Number(e.target.value) })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+            <label className="text-xs text-slate-400">Duration (periods)<input type="number" min="1" max="13" value={manualEvent.duration_periods} onChange={(e) => setManualEvent({ ...manualEvent, duration_periods: Number(e.target.value) })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+            <label className="text-xs text-slate-400">Day<select value={manualEvent.day} onChange={(e) => setManualEvent({ ...manualEvent, day: e.target.value })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100">{["MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => <option key={day}>{day}</option>)}</select></label>
+            <label className="text-xs text-slate-400">Start period<input type="number" min="1" max="13" value={manualEvent.start_period} onChange={(e) => setManualEvent({ ...manualEvent, start_period: Number(e.target.value) })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+            <label className="text-xs text-slate-400">Room<select value={manualEvent.room_id} onChange={(e) => setManualEvent({ ...manualEvent, room_id: e.target.value })} className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100">{rooms.map(room => <option key={room.id} value={room.id}>{room.id} · {room.name} ({room.capacity})</option>)}</select></label>
+            <label className="text-xs text-slate-400 sm:col-span-2">Decision reason<input value={manualEvent.reason} onChange={(e) => setManualEvent({ ...manualEvent, reason: e.target.value })} placeholder="Required reason for audit" className="mt-1 h-9 w-full rounded border border-surface-border bg-surface-muted px-2 text-slate-100" /></label>
+            <div className="flex items-end"><Button size="sm" onClick={handleManualSchedule} disabled={manualBusy || !manualEvent.title || manualEvent.reason.trim().length < 8 || !manualEvent.room_id}>{manualBusy ? "Checking…" : "Validate and schedule"}</Button></div>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         <StatCard
-          label="Spectra Requests"
+          label={role === "club_representative" ? "My Club Requests" : "Spectra Requests"}
           value={`${bookings.length} Requests`}
           subtext="Evaluated by role-category priority"
           icon={<DoorClosed className="w-4 h-4" />}
@@ -156,19 +278,21 @@ export default function VenueBookingsPage() {
           subtext="P10–P13 evening slots"
           icon={<AlertTriangle className="w-4 h-4 text-amber-400" />}
         />
-        <StatCard
-          label="Booking Score"
-          value={`${bookingScore} / 100`}
-          subtext="Official validator benchmark"
-          icon={<CheckCircle2 className="w-4 h-4 text-cyan-400" />}
-        />
+        {role !== "club_representative" && (
+          <StatCard
+            label="Booking Score"
+            value={`${bookingScore} / 100`}
+            subtext="Official validator benchmark"
+            icon={<CheckCircle2 className="w-4 h-4 text-cyan-400" />}
+          />
+        )}
       </div>
 
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-border/50">
           <CardTitle className="text-sm font-semibold flex items-center gap-2">
             <DoorClosed className="w-4 h-4 text-blue-400" />
-            Spectra Event Bookings Registry ({filtered.length} matching)
+            {role === "club_representative" ? "My Club Requests" : "Spectra Event Bookings Registry"} ({filtered.length} matching)
             {canApprove && (
               <Badge variant="cyan" className="text-[10px] ml-2">
                 Approver
@@ -312,14 +436,20 @@ export default function VenueBookingsPage() {
                             Pending
                           </span>
                         )}
+                        {b.reason && <div className="mt-1 max-w-48 text-[10px] text-slate-400" title={b.reason}>{b.reason}</div>}
                       </td>
                       {canApprove && (
                         <td className="py-3 px-3">
+                          <div className="min-w-56 space-y-2">
+                            <input aria-label={`Decision reason for ${b.request_id}`} placeholder="Required decision reason" value={decisionInputs[b.request_id]?.reason || ""} onChange={(e) => setDecisionInputs((prev) => ({ ...prev, [b.request_id]: { ...(prev[b.request_id] || { day: b.day || "", period: String(b.start_period || ""), room: b.room_id || "" }), reason: e.target.value } }))} className="h-8 w-full rounded border border-surface-border bg-surface-muted px-2 text-[10px] text-slate-100" />
+                            <div className="flex gap-1">
+                              <select aria-label="Decision day" value={decisionInputs[b.request_id]?.day || b.day || ""} onChange={(e) => setDecisionInputs((prev) => ({ ...prev, [b.request_id]: { ...(prev[b.request_id] || { reason: "", period: String(b.start_period || ""), room: b.room_id || "" }), day: e.target.value } }))} className="h-7 rounded border border-surface-border bg-surface-muted px-1 text-[10px] text-slate-100">{["MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => <option key={day} value={day}>{day}</option>)}</select>
+                              <input aria-label="Decision period" type="number" min="1" max="13" placeholder="P" value={decisionInputs[b.request_id]?.period || b.start_period || ""} onChange={(e) => setDecisionInputs((prev) => ({ ...prev, [b.request_id]: { ...(prev[b.request_id] || { reason: "", day: b.day || "", room: b.room_id || "" }), period: e.target.value } }))} className="h-7 w-12 rounded border border-surface-border bg-surface-muted px-1 text-[10px] text-slate-100" />
+                              <input aria-label="Decision room" placeholder="Room ID" value={decisionInputs[b.request_id]?.room || b.room_id || ""} onChange={(e) => setDecisionInputs((prev) => ({ ...prev, [b.request_id]: { ...(prev[b.request_id] || { reason: "", day: b.day || "", period: String(b.start_period || "") }), room: e.target.value } }))} className="h-7 w-20 rounded border border-surface-border bg-surface-muted px-1 text-[10px] text-slate-100" />
+                            </div>
                           <div className="flex items-center gap-1.5">
                             <button
-                              onClick={() =>
-                                handleDecision(b.request_id, "approve")
-                              }
+                              onClick={() => handleDecision(b.request_id, "approve", b)}
                               disabled={
                                 actioning === b.request_id ||
                                 b.status === "approved"
@@ -334,9 +464,7 @@ export default function VenueBookingsPage() {
                               )}
                             </button>
                             <button
-                              onClick={() =>
-                                handleDecision(b.request_id, "reject")
-                              }
+                              onClick={() => handleDecision(b.request_id, "reject", b)}
                               disabled={
                                 actioning === b.request_id ||
                                 b.status === "rejected"
@@ -346,6 +474,8 @@ export default function VenueBookingsPage() {
                             >
                               <ThumbsDown className="w-3.5 h-3.5" />
                             </button>
+                            <button onClick={() => handleDecision(b.request_id, "alternative", b)} disabled={actioning === b.request_id} className="rounded border border-amber-500/20 px-2 py-1 text-[10px] text-amber-300 disabled:opacity-30">Offer alternative</button>
+                          </div>
                           </div>
                         </td>
                       )}

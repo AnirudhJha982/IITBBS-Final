@@ -13,10 +13,11 @@ python-multipart>=0.0.12
 SQLAlchemy>=2.0.36
 greenlet>=3.1.0
 aiosqlite>=0.20.0
+asyncpg>=0.29.0
 
 # Mathematical Optimization & Constraint Programming
 # (Optional local dependency for CP-SAT solver; serverless uses verified schedule loader)
-# ortools>=9.11.0
+ortools>=9.11.0,<10
 
 # Environment & Utilities
 python-dotenv>=1.0.1

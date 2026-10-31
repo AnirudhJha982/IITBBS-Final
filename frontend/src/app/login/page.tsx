@@ -32,6 +32,13 @@ const DEMO_ACCOUNTS = [
     password: "Dean@2026",
   },
   {
+    id: "department_coordinator",
+    label: "Department Coordinator",
+    badge: "Department",
+    email: "dept.coordinator@chitkara.edu.in",
+    password: "DeptCoord@2026",
+  },
+  {
     id: "venue_manager",
     label: "Venue Manager",
     badge: "Spectra",
@@ -51,6 +58,13 @@ const DEMO_ACCOUNTS = [
     badge: "Viewer",
     email: "student@chitkara.edu.in",
     password: "Student@2026",
+  },
+  {
+    id: "club_representative",
+    label: "Club Representative",
+    badge: "Club Requests",
+    email: "club@chitkara.edu.in",
+    password: "Club@2026",
   },
   {
     id: "super_admin",

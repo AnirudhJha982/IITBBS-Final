@@ -1,186 +1,101 @@
-# CampusOS AI — Intelligent Campus Scheduling & Venue Management Platform
+# CampusOS AI
 
-> **Client:** Chitkara Institute of Technology  
-> **Status:** Phase 1 Complete (Foundation, Architecture & Environment Setup)  
-> **Visual Identity:** Deep Navy with Electric Blue & Cyan Accents (Commercial SaaS)
+CampusOS AI is a timetable and venue-management prototype for the CIT scheduling challenge. It includes the official CIT dataset, a Google OR-Tools CP-SAT scheduling engine, reference exports, and a Next.js dashboard with demo role accounts.
 
----
+**Live site:** [routinetable.vercel.app](https://routinetable.vercel.app)
 
-## 1. Project Overview
+**Repository:** [github.com/AnirudhJha982/IITBBS-Final](https://github.com/AnirudhJha982/IITBBS-Final)
 
-CampusOS AI is an enterprise-grade campus scheduling and venue management platform engineered for Chitkara Institute of Technology. It unifies:
+## Architecture
 
-- **Automated Clash-Free Timetables:** Google OR-Tools CP-SAT formulation solving 189 weekly course sessions across 27 rooms with 0 hard conflicts.
-- **Midsemester Examination Scheduling:** Conflict-free exam slotting and invigilation assignment for 41 midsem exams.
-- **AI-Powered Venue Booking:** Natural language and Hinglish request parser with strict, deterministic backend constraint verification.
-- **Dynamic Disruption Rescheduling:** Minimum-displacement reallocation when rooms or faculty become unexpectedly unavailable.
-- **Role-Based Access Control (RBAC):** Granular permissions for Super Admins, Deans, Coordinators, Faculty, Venue Managers, and Student Representatives.
-- **Independent Constraint Verification:** Zero tolerance for violations; verified through the official `validator.py`.
-
----
-
-## 2. Monorepo Architecture
-
-```text
-campusos-ai/
-├── frontend/                     # Next.js App Router, TypeScript, Tailwind CSS
-│   ├── src/
-│   │   ├── app/                  # 13 Application Router Pages + Root
-│   │   │   ├── dashboard/        # Operational overview & diagnostics
-│   │   │   ├── timetable/        # Master clash-free matrix grid
-│   │   │   ├── examinations/     # 41 Midsem exam scheduler
-│   │   │   ├── venue-bookings/   # 25 Spectra requests & venue approvals
-│   │   │   ├── rescheduling/     # Disruption recovery & minimal displacement
-│   │   │   ├── assistant/        # English & Hinglish AI assistant
-│   │   │   ├── manual-scheduling/# Constraint-checked manual slotting
-│   │   │   ├── rooms/            # 27 Campus venues directory
-│   │   │   ├── faculty/          # 40 Faculty directory & workload registry
-│   │   │   ├── approvals/        # Role-based governance queue
-│   │   │   ├── analytics/        # Utilization & efficiency metrics
-│   │   │   ├── settings/         # Solver parameters & AI provider config
-│   │   │   └── login/            # RBAC portal sign-in
-│   │   ├── components/
-│   │   │   ├── ui/               # Badge, Button, Card, Input, Tabs
-│   │   │   └── shared/           # AppShell, Sidebar, Header, PageHeader, EmptyState, StatCard
-│   │   ├── lib/                  # Utilities (clsx/tailwind-merge cn)
-│   │   ├── styles/               # globals.css (deep navy theme tokens)
-│   │   └── types/                # Strict TypeScript domain contracts
-│   ├── package.json
-│   ├── tsconfig.json
-│   └── tailwind.config.ts
-│
-├── backend/                      # Python FastAPI, SQLAlchemy 2.0, Alembic
-│   ├── app/
-│   │   ├── api/                  # Versioned API routes (/api/v1/health)
-│   │   ├── core/                 # Pydantic Settings, logging, RBAC permissions
-│   │   ├── database/             # Async SQLAlchemy session factory & base
-│   │   ├── models/               # Database entity architecture plan
-│   │   ├── schemas/              # Pydantic request/response validation schemas
-│   │   ├── scheduling/           # Google OR-Tools CP-SAT engine (Phase 2 placeholder)
-│   │   ├── validation/           # Official validator.py adapter (Phase 2 placeholder)
-│   │   ├── services/             # Booking decision & disruption engines
-│   │   ├── ai/                   # AI provider abstraction (OpenAI, Gemini, Mock)
-│   │   └── main.py               # FastAPI entrypoint, CORS, exception handlers
-│   ├── alembic/                  # Async database migrations
-│   ├── tests/                    # Pytest test suite (health, config, RBAC)
-│   ├── requirements.txt          # Python dependencies
-│   └── Dockerfile
-│
-├── data/
-│   └── official/                 # Canonical home for starter pack dataset (protected)
-├── exports/                      # Destination for generated timetable JSON/CSVs
-├── docs/                         # Technical documentation & ADRs
-│   ├── dataset_integration_strategy.md
-│   └── architecture_decisions/   # ADR-001 through ADR-004
-├── scripts/                      # Windows PowerShell automation scripts
-├── .env.example                  # Environment configuration template
-├── .gitignore
-├── docker-compose.yml            # Multi-container orchestration (DB, API, Web)
-└── README.md
+```mermaid
+flowchart LR
+  Browser[Next.js web app] --> WebAPI[Next.js API routes]
+  WebAPI --> Fixtures[Checked-in JSON fixtures]
+  API[FastAPI backend] --> Data[Official CIT dataset and schedule exports]
+  API --> Solver[OR-Tools CP-SAT scheduler]
+  Exports[exports/schedule.json and schedule_after.json] --> Validator[Official validator.py]
+  Data --> Validator
 ```
 
----
+## Technology
 
-## 3. Technology Stack
+- Frontend: Next.js 14, React 18, TypeScript, Tailwind CSS, Recharts, Framer Motion.
+- Backend: Python, FastAPI, Pydantic, SQLAlchemy; SQLite locally and PostgreSQL when configured.
+- Scheduling: Google OR-Tools CP-SAT and the organizer-provided independent validator.
+- Data: official `cit-public-v1` dataset (27 rooms, 40 faculty, 14 groups, 62 courses, 189 sessions, 41 exams, 25 booking requests).
 
-| Layer | Technologies Configured |
-| :--- | :--- |
-| **Frontend** | Next.js 14 (App Router), React 18, TypeScript 5, Tailwind CSS 3, Lucide React, Recharts, Framer Motion |
-| **Backend** | Python 3.14 / 3.12, FastAPI, SQLAlchemy 2.0 (Async), Alembic, Pydantic v2, Pydantic Settings |
-| **Optimization** | Google OR-Tools CP-SAT (Constraint Programming) |
-| **AI Subsystem** | Provider Abstraction (`BaseAIProvider`, `MockAIProvider`, extensible to OpenAI/Gemini) |
-| **Database** | PostgreSQL 16 (Docker) / SQLite with `aiosqlite` (Local standalone fallback) |
-| **Testing** | Pytest, Pytest-Asyncio, HTTPX (Backend) / Next.js type check & build (Frontend) |
+## Run locally (Windows PowerShell)
 
----
+From the repository root:
 
-## 4. Installation & Execution Guide (Windows)
-
-### Prerequisites
-- Node.js (v20+ or v24+)
-- Python (3.11, 3.12, 3.13, or 3.14)
-- Git & PowerShell
-
-### Step 1: Environment Setup
 ```powershell
-# Copy the environment file template
 Copy-Item .env.example .env
-```
-
-### Step 2: Backend Setup
-```powershell
-# Navigate to workspace root
-cd "C:\Users\jhaan\OneDrive\Desktop\Projects\Final IIT BBS"
-
-# Activate existing virtual environment
-.\backend\.venv\Scripts\Activate.ps1
-
-# (Optional: install/update dependencies if starting fresh)
-# pip install -r backend\requirements.txt
-```
-
-### Step 3: Frontend Setup
-```powershell
-cd frontend
+python -m venv backend\.venv
+.\backend\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
+Set-Location frontend
 npm install
+npm run dev
 ```
 
----
+The web app is at `http://localhost:3000`. In a second terminal, start the API from the repository root:
 
-## 5. Starting the Services
-
-### Option A: Using PowerShell Helper Scripts
-
-**Terminal 1 — Backend Server:**
 ```powershell
-.\scripts\start_backend.ps1
-```
-> Runs FastAPI on `http://127.0.0.1:8000`  
-> Interactive OpenAPI documentation: `http://127.0.0.1:8000/api/v1/docs`  
-> Health Diagnostics: `http://127.0.0.1:8000/api/v1/health`
-
-**Terminal 2 — Frontend Application:**
-```powershell
-.\scripts\start_frontend.ps1
-```
-> Runs Next.js on `http://localhost:3000`
-
-### Option B: Docker Compose
-```powershell
-docker compose up --build
+Set-Location "C:\Users\jhaan\OneDrive\Desktop\Projects\Final IIT BBS"
+.\backend\.venv\Scripts\python.exe -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
----
+The API health check is `http://127.0.0.1:8000/api/v1/health`. To run the CP-SAT solver locally, install OR-Tools in the backend environment (`python -m pip install "ortools>=9.11"`).
 
-## 6. Running Tests
+## Demo accounts
 
-### Backend Test Suite (Pytest)
+Use the following email/password pairs at `/login`:
+
+| Role | Email | Password |
+|---|---|---|
+| Admin / Super Admin | `admin@chitkara.edu.in` | `Admin@2026` |
+| Department Coordinator | `dept.coordinator@chitkara.edu.in` | `DeptCoord@2026` |
+| Faculty | `faculty@chitkara.edu.in` | `Faculty@2026` |
+| Club Representative | `club@chitkara.edu.in` | `Club@2026` |
+| Timetable Coordinator | `coordinator@chitkara.edu.in` | `Coord@2026` |
+| Academic Dean | `dean@chitkara.edu.in` | `Dean@2026` |
+| Department Head | `hod@chitkara.edu.in` | `HoD@2026` |
+| Venue Manager | `venues@chitkara.edu.in` | `Venue@2026` |
+| Student Representative | `student@chitkara.edu.in` | `Student@2026` |
+
+These are public demonstration credentials, not institutional accounts. Do not use them for real data.
+
+## Validation and tests
+
+Run the official checker on the checked-in exports:
+
 ```powershell
-.\backend\.venv\Scripts\pytest backend\tests
+python data\official\validator.py --data data\official\cit_public.json --schedule exports\schedule.json
+python data\official\validator.py --data data\official\cit_public.json --schedule exports\schedule_after.json --disruption data\official\CrunchWeek_StarterPack\examples\sample_disruption.json --baseline exports\schedule.json
 ```
-> Verified: **6 passed tests** (Health probe, root redirect, 404 handler, configuration defaults, RBAC matrix).
 
-### Frontend Typecheck & Build
+The checked-in exports currently report zero hard violations. The baseline export has soft penalty 339 and booking score 66.0. The disruption export has soft penalty 251 and booking score 64.5; the official checker reports 186 displaced sessions (176 time changes and 10 room-only changes).
+
+Other checks:
+
 ```powershell
-cd frontend
+node scripts\test_rbac_suite.mjs
+Set-Location frontend
+$env:CAMPUSOS_BUILD_DIR = "campusos-build"
 npm run build
 ```
-> Verified: **17 static routes compiled with 0 TypeScript and 0 lint errors**.
 
----
+## Configuration
 
-## 7. Official Starter Pack Expectations (Phase 2)
+`.env.example` lists the application settings and contains no real credentials. Set a private random `CAMPUSOS_AUTH_SECRET` of at least 32 characters in production. Configure `DATABASE_URL` to a persistent PostgreSQL service before relying on user-created or changed records. `BACKEND_URL` is supplied by the Vercel service binding in production.
 
-Before implementing Phase 2 optimization logic, the official starter pack must be supplied in `data/official/`:
+## Known limitations
 
-1. `cit_public.json`: Unified master dataset with:
-   - **27 Rooms** (seating capacities, equipment, lecture halls, labs)
-   - **40 Faculty Members** (department, teaching load caps)
-   - **14 Student Groups** (cohort sections)
-   - **62 Courses** (credit breakdown)
-   - **189 Weekly Sessions** (243 teaching contact hours)
-2. `validator.py`: Official independent constraint verification script.
-3. `sample_disruption.json`: Emergency faculty absence or room closure scenario.
-4. `sample_schedule.json`: Baseline schedule schema.
-5. **25 Spectra Booking Requests**: High-priority cultural & technical festival venue reservations.
-6. **41 Midsemester Examinations**: Exam slots and invigilation assignments.
+- The checked-in timetable and booking decisions are validated reference exports. The current frontend API still serves fixture data for several workflows; it has no booking-submit or cancel endpoint, booking decisions do not persist, the manual scheduling page is not backed by the solver, and timetable generation/rescheduling buttons must not be treated as proof of a new saved schedule.
+- Production does not currently have a configured persistent database. Serverless `/tmp` storage is temporary and is not suitable for durable bookings, uploads, approvals, or a judge reset workflow.
+- The in-app assistant currently uses deterministic keyword responses. No external LLM provider/API is called by the deployed product. Natural-language schedule changes and the required manual booking request form are not yet connected to validated, persisted requests.
+- The admin reset button reloads the immutable reference fixtures; it cannot reset persisted booking changes because those changes are not currently stored. The required five-minute video walkthrough has not been completed.
+- The event kickoff time was not included in the supplied problem statement, so the repository creation date cannot be checked against the event-start rule from the available materials.
+- Older role demos (dean, department head, venue manager, student representative, and timetable coordinator) remain alongside the four roles named by the problem statement.
+
+See [AI_USAGE.md](AI_USAGE.md), [THIRD_PARTY.md](THIRD_PARTY.md), and [docs/ai_prompt_log.md](docs/ai_prompt_log.md) for declarations.
