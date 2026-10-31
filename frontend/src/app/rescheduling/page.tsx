@@ -74,6 +74,7 @@ export default function ReschedulingPage() {
         document.body.appendChild(a);
         a.click();
         a.remove();
+        window.URL.revokeObjectURL(url);
       }
     } catch (err) {
       console.error("Export error:", err);

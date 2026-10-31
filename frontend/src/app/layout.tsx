@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
   title: "CampusOS AI — Intelligent Campus Scheduling & Venue Management",
@@ -15,7 +16,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="bg-navy-950 text-slate-100 min-h-screen antialiased selection:bg-blue-600/30 selection:text-blue-300">
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

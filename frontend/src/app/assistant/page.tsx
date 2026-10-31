@@ -41,6 +41,16 @@ export default function AssistantPage() {
     scrollToBottom();
   }, [messages, loading]);
 
+  // Check URL query parameter on load
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const q = new URLSearchParams(window.location.search).get("q");
+      if (q) {
+        handleSend(q);
+      }
+    }
+  }, []);
+
   const handleSend = async (textToSend?: string) => {
     const query = (textToSend || prompt).trim();
     if (!query || loading) return;

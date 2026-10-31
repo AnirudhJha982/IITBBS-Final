@@ -7,12 +7,17 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { Settings, Cpu, Bot, Shield, Save, Check } from "lucide-react";
+import { Settings, Cpu, Bot, Shield, Save, Check, Lock } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { PERMISSIONS } from "@/lib/auth";
 
 export default function SettingsPage() {
+  const { role } = useAuth();
   const [saved, setSaved] = useState(false);
+  const isSuperAdmin = role === "super_admin";
 
   const handleSave = () => {
+    if (!isSuperAdmin) return;
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -114,8 +119,19 @@ export default function SettingsPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex justify-end gap-3 pt-4 border-t border-surface-border/50">
-            <Button variant="primary" size="sm" onClick={handleSave}>
+          <CardFooter className="flex items-center justify-between pt-4 border-t border-surface-border/50">
+            {!isSuperAdmin ? (
+              <span className="text-xs text-amber-400 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5" />
+                Read-Only Configuration Mode (Super Admin permission required to modify system limits)
+              </span>
+            ) : (
+              <span className="text-xs text-emerald-400 flex items-center gap-1.5">
+                <Check className="w-3.5 h-3.5" />
+                Super Administrator Mode Active
+              </span>
+            )}
+            <Button variant="primary" size="sm" onClick={handleSave} disabled={!isSuperAdmin}>
               {saved ? (
                 <>
                   <Check className="w-4 h-4 mr-1.5 text-emerald-300" />

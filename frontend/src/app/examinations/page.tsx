@@ -22,7 +22,7 @@ export default function ExaminationsPage() {
         const res = await fetchBackend("/examinations/");
         if (res.ok) {
           const data = await res.json();
-          setExams(data.examinations || []);
+          setExams(data.examinations || data.exams || []);
         }
       } catch (err) {
         console.error("Failed to load exams:", err);
@@ -141,21 +141,20 @@ export default function ExaminationsPage() {
                       <td className="py-3 px-3">
                         <span className="font-semibold text-slate-100">{e.day}</span>{" "}
                         <span
-                          className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-                            e.session === "AM"
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded ${e.session === "AM"
                               ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                               : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-                          }`}
+                            }`}
                         >
                           {e.session} (2h)
                         </span>
                       </td>
                       <td className="py-3 px-3 font-mono text-slate-300">
-                        {e.course_ids.join(", ")}
+                        {(e.course_ids || []).join(", ")}
                       </td>
                       <td className="py-3 px-3">
                         <div className="flex flex-wrap gap-1">
-                          {e.groups.map((g: string) => (
+                          {(e.groups || []).map((g: string) => (
                             <span key={g} className="px-1.5 py-0.5 rounded bg-surface-muted text-[10px] text-slate-300 font-mono">
                               {g}
                             </span>
