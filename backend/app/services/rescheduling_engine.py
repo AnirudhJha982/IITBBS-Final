@@ -49,6 +49,11 @@ def apply_disruption_to_data(data: Dict[str, Any], disruption: Dict[str, Any]) -
             d["sessions"].append(ch["session"])
         elif t == "remove_session":
             d["sessions"] = [s for s in d["sessions"] if s["id"] != ch["session_id"]]
+        elif t == "session_fixed_slot":
+            target = next((s for s in d["sessions"] if s["id"] == ch["session_id"]), None)
+            if target is None:
+                raise ValueError(f"Unknown academic session: {ch['session_id']}")
+            target["fixed_slot"] = {"day": ch["day"], "start_period": int(ch["start_period"])}
         else:
             raise ValueError(f"Unknown change type: {t}")
 

@@ -139,3 +139,39 @@ def test_sample_disruption_repairs_only_invalidated_sessions():
     assert len(repaired["sessions"]) == len(repaired_data["sessions"])
     assert moved_existing == invalidated
     assert _validate_full_schedule(repaired_data, repaired) == []
+
+
+def test_faculty_fixed_slot_request_uses_minimal_valid_repair():
+    dataset = ScheduleLoader.load_dataset(force_reload=True)
+    baseline = ScheduleLoader.load_baseline_schedule(force_reload=True)
+    baseline_slots = {slot["session_id"]: slot for slot in baseline["sessions"]}
+    target = None
+    destination = None
+    teaching_periods = [period["id"] for period in dataset["calendar"]["periods"] if period.get("teaching")]
+    for session in dataset["sessions"]:
+        old = baseline_slots.get(session["id"])
+        if session.get("faculty_id") != "F12" or session.get("fixed_slot") or not old:
+            continue
+        for day in dataset["calendar"]["days"]:
+            for period in teaching_periods:
+                if (day, period) == (old["day"], old["start_period"]):
+                    continue
+                if not _check_manual_slot(dataset, baseline, session["id"], day, period, old["room_id"]):
+                    target = session
+                    destination = (day, period)
+                    break
+            if destination:
+                break
+        if destination:
+            break
+
+    assert target is not None and destination is not None
+    disruption = {"id": "faculty-move-test", "changes": [{"type": "session_fixed_slot", "session_id": target["id"], "day": destination[0], "start_period": destination[1]}]}
+    repaired_data = apply_disruption_to_data(dataset, disruption)
+    repaired = ReschedulingEngine(time_limit_seconds=12, num_workers=4).repair_schedule(dataset, disruption, baseline)
+    repaired_slots = {slot["session_id"]: slot for slot in repaired["sessions"]}
+    moved_existing = {sid for sid, slot in baseline_slots.items() if slot != repaired_slots.get(sid)}
+
+    assert target["id"] in moved_existing
+    assert len(moved_existing) == 1
+    assert _validate_full_schedule(repaired_data, repaired) == []

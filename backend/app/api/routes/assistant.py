@@ -13,7 +13,7 @@ from backend.app.api.routes.timetable import _check_manual_slot
 from backend.app.core.auth import CurrentUser, get_current_user
 from backend.app.scheduling.engine import SchedulingEngine
 from backend.app.services.app_state import read_state, write_state
-from backend.app.services.rescheduling_engine import ReschedulingEngine
+from backend.app.services.rescheduling_engine import ReschedulingEngine, apply_disruption_to_data
 from backend.app.services.schedule_loader import ScheduleLoader
 
 router = APIRouter(prefix="/assistant", tags=["AI Assistant"])
@@ -81,7 +81,7 @@ async def _create_faculty_proposal(query: str, user: CurrentUser, data: dict, ba
         session = next(item for item in data["sessions"] if item["id"] == target_id)
         if session.get("fixed_slot") and (session["fixed_slot"].get("day") != requested_day or int(session["fixed_slot"].get("start_period", -1)) != requested_period):
             return {"success": True, "reply": f"{target_id} is fixed to {session['fixed_slot']['day']} P{session['fixed_slot']['start_period']} by the official dataset. I can't override that hard constraint. No proposal was created."}
-        session["fixed_slot"] = {"day": requested_day, "start_period": requested_period}
+        changes.append({"type": "session_fixed_slot", "session_id": target_id, "day": requested_day, "start_period": requested_period, "reason": "Faculty request via schedule assistant"})
     else:
         return {"success": True, "reply": "I can prepare a solver-checked proposal. For a class move, include a session ID, a day, and a period (for example, 'move CS201-L1 to THU P4'). For leave, say which weekday you are unavailable (for example, 'I am on leave Monday'). No change has been made."}
 
@@ -89,13 +89,15 @@ async def _create_faculty_proposal(query: str, user: CurrentUser, data: dict, ba
     try:
         if changes:
             candidate = ReschedulingEngine(time_limit_seconds=12, num_workers=4).repair_schedule(data, disruption, baseline)
+            proposal_data = apply_disruption_to_data(data, disruption)
         else:
             candidate = SchedulingEngine(time_limit_seconds=12, num_workers=4).generate_full_schedule(data, baseline_schedule=baseline)
+            proposal_data = data
         expected = len(data.get("sessions", [])) + sum(change.get("type") == "add_session" for change in changes) - sum(change.get("type") == "remove_session" for change in changes)
         if len(candidate.get("sessions", [])) != expected:
             raise RuntimeError("Solver returned an incomplete timetable.")
         for slot in candidate.get("sessions", []):
-            violations = _check_manual_slot(data, candidate, slot["session_id"], slot["day"], int(slot["start_period"]), slot["room_id"])
+            violations = _check_manual_slot(proposal_data, candidate, slot["session_id"], slot["day"], int(slot["start_period"]), slot["room_id"])
             if violations:
                 raise RuntimeError("The candidate failed hard-constraint validation: " + "; ".join(violations[:5]))
         changes_list = _placement_map(baseline, candidate)
