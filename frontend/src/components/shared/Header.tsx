@@ -3,16 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { Search, Bell, ShieldCheck, Activity, Terminal } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { fetchBackend } from "@/lib/api";
 
 export function Header() {
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
 
   useEffect(() => {
-    // Quick probe to backend health endpoint
+    // Quick probe to backend health endpoint using unified fetchBackend
     const checkApi = async () => {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-        const res = await fetch(`${baseUrl}/health`, { method: "GET" });
+        const res = await fetchBackend("/health", { method: "GET" });
         if (res.ok) {
           setApiStatus("online");
         } else {

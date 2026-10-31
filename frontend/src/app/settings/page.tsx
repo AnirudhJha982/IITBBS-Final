@@ -110,7 +110,7 @@ export default function SettingsPage() {
                 <label className="text-xs font-medium text-slate-300 block mb-1.5">
                   Backend API Base URL
                 </label>
-                <Input defaultValue={process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1"} />
+                <Input defaultValue={process.env.NEXT_PUBLIC_API_URL || "/api/v1"} />
               </div>
             </div>
           </CardContent>
