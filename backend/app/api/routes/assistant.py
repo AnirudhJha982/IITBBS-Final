@@ -3,6 +3,7 @@
 import re
 import hashlib
 import json
+from collections import Counter
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -150,7 +151,30 @@ async def chat_with_assistant(req: ChatMessageRequest, current_user: CurrentUser
             room = next((item for item in rooms if slot and item["id"] == slot.get("room_id")), {})
             if not slot:
                 return {"success": True, "reply": f"{mentioned} has no active placement in the current schedule."}
-            return {"success": True, "reply": f"{mentioned} is scheduled {slot['day']} P{slot['start_period']} in {room.get('name', slot['room_id'])} ({slot['room_id']}). This placement is allowed by the official room type and capacity ({room.get('capacity', 'unknown')} seats for {meta.get('size', 'unknown')} students) and the active schedule has no room, faculty, or group overlap there. The solver optimizes a feasible placement across the full timetable; the stored schedule does not retain a single exclusive reason for choosing this period."}
+            start = int(slot["start_period"])
+            earlier_periods = [int(period["id"]) for period in data.get("calendar", {}).get("periods", []) if period.get("teaching") and int(period["id"]) < start]
+            compatible_rooms = [candidate for candidate in rooms if candidate.get("type") in set(meta.get("room_types", [])) and int(candidate.get("capacity", 0)) >= int(meta.get("size", 0)) and (not meta.get("needs_accessible") or candidate.get("accessible")) and meta.get("kind") in candidate.get("allowed_uses", [])]
+            earlier_choices = []
+            blocked_reasons = Counter()
+            for period in earlier_periods:
+                found = False
+                for candidate_room in compatible_rooms:
+                    blockers = _check_manual_slot(data, schedule, mentioned, slot["day"], period, candidate_room["id"])
+                    if not blockers:
+                        earlier_choices.append(f"P{period} in {candidate_room.get('name', candidate_room['id'])}")
+                        found = True
+                        break
+                    blocked_reasons.update(blockers)
+                if not found and not compatible_rooms:
+                    blocked_reasons.update(["No room meets the session's official type, capacity, and accessibility requirements."])
+            if earlier_choices:
+                timing_reason = f"Earlier hard-constraint-safe choices also exist ({', '.join(earlier_choices[:3])}), so the saved timetable does not record a unique reason for preferring this period."
+            elif earlier_periods:
+                reason_examples = "; ".join(reason for reason, _ in blocked_reasons.most_common(3))
+                timing_reason = f"The earlier teaching periods were blocked by the active hard constraints. Examples: {reason_examples or 'the session availability and timetable constraints'}."
+            else:
+                timing_reason = "This is the first teaching period in the campus day; no earlier teaching slot exists."
+            return {"success": True, "reply": f"{mentioned} is scheduled {slot['day']} P{start} in {room.get('name', slot['room_id'])} ({slot['room_id']}). The room is allowed and seats {room.get('capacity', 'unknown')} for {meta.get('size', 'unknown')} students. {timing_reason} The active timetable has no room, faculty, or student-group overlap at the selected slot."}
         return {"success": True, "reply": "To explain a placement, include its session ID (for example, 'Why is CS201-L1 at P2?')."}
 
     for room in rooms:

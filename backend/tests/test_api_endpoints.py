@@ -113,6 +113,18 @@ async def test_assistant_chat():
         assert "Google OR-Tools CP-SAT" in data["reply"]
 
 
+@pytest.mark.asyncio
+async def test_assistant_explains_a_real_timetable_placement():
+    baseline = ScheduleLoader.load_baseline_schedule(force_reload=True)
+    session_id = baseline["sessions"][0]["session_id"]
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.post("/api/v1/assistant/chat", json={"message": f"Why is {session_id} scheduled at this time?"})
+    assert response.status_code == 200
+    reply = response.json()["reply"]
+    assert session_id in reply
+    assert "Earlier" in reply or "first teaching period" in reply
+
+
 def test_sample_disruption_repairs_only_invalidated_sessions():
     dataset = ScheduleLoader.load_dataset(force_reload=True)
     baseline = ScheduleLoader.load_baseline_schedule(force_reload=True)
