@@ -7,8 +7,6 @@ import copy
 import json
 from pathlib import Path
 from typing import Dict, Any, List
-from ortools.sat.python import cp_model
-
 from backend.app.core.logging import logger
 from backend.app.scheduling.engine import SchedulingEngine
 
