@@ -42,20 +42,22 @@ const GRID_ROW_HEIGHT = 92;
 const LUNCH_ROW_HEIGHT = 30;
 const TIMELINE_HEIGHT = GRID_ROW_HEIGHT * PERIODS.length + LUNCH_ROW_HEIGHT;
 
-const SESSION_COLORS: Record<string, { card: string; label: string }> = {
-  lecture: {
-    card: "border-[#8ed2ed] bg-[#d8f2fb] text-[#164b60]",
-    label: "bg-white/60 text-[#23637a]",
-  },
-  tutorial: {
-    card: "border-[#c6a8ef] bg-[#eee2ff] text-[#493167]",
-    label: "bg-white/60 text-[#684a91]",
-  },
-  lab: {
-    card: "border-[#e6c66e] bg-[#fff0bf] text-[#654c10]",
-    label: "bg-white/60 text-[#83641a]",
-  },
-};
+const SESSION_COLORS = [
+  { card: "border-[#a4d952] bg-[#c5f26c] text-[#344a1d]", label: "bg-white/60 text-[#48622b]" },
+  { card: "border-[#e9cf45] bg-[#fff06b] text-[#514713]", label: "bg-white/60 text-[#776719]" },
+  { card: "border-[#e38385] bg-[#f59d9e] text-[#5d3034]", label: "bg-white/60 text-[#82464a]" },
+  { card: "border-[#c29be2] bg-[#d8b4f4] text-[#493260]", label: "bg-white/60 text-[#684a91]" },
+  { card: "border-[#5ec4d1] bg-[#80dfe9] text-[#174c53]", label: "bg-white/60 text-[#23637a]" },
+  { card: "border-[#74aadd] bg-[#96c6ef] text-[#23455f]", label: "bg-white/60 text-[#315f86]" },
+];
+
+function colorsForCourse(courseId: string) {
+  const hash = Array.from(courseId).reduce(
+    (value, character) => (value * 31 + character.charCodeAt(0)) >>> 0,
+    0
+  );
+  return SESSION_COLORS[hash % SESSION_COLORS.length];
+}
 
 interface Session {
   session_id: string;
@@ -445,7 +447,7 @@ export default function TimetablePage() {
                         Lunch break
                       </div>
                       {layoutDaySessions(day.sessions).map(({ session, lane, laneCount }) => {
-                        const colors = SESSION_COLORS[session.kind] || SESSION_COLORS.lecture;
+                        const colors = colorsForCourse(session.course_id);
                         const width = 100 / laneCount;
                         const groupSummary = (session.groups ?? []).slice(0, 2).join(", ");
                         return (
