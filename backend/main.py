@@ -31,8 +31,9 @@ except Exception as e:
     err_trace = traceback.format_exc()
     app = FastAPI(title="CampusOS AI Startup Diagnostic")
 
+    @app.api_route("/", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"])
     @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"])
-    async def startup_error_fallback(full_path: str):
+    async def startup_error_fallback(full_path: str = ""):
         return JSONResponse(
             status_code=500,
             content={
@@ -42,5 +43,9 @@ except Exception as e:
                 "sys_path": sys.path,
             }
         )
+else:
+    @app.get("/api/v1/health-check", tags=["Probe"])
+    async def direct_probe():
+        return {"status": "ok", "entrypoint": "backend.main:app"}
 
 __all__ = ["app"]
