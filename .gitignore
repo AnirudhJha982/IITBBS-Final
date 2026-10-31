@@ -57,6 +57,7 @@ frontend/.next/
 frontend/campusos-build/
 frontend/campusos-bright-build/
 frontend/campusos-pastel-build/
+frontend/campusos-exam-build/
 frontend/out/
 frontend/build/
 .next/
