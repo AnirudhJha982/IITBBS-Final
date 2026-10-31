@@ -1,0 +1,12 @@
+{
+  "name": "campusos-ai-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CampusOS AI - Intelligent Campus Scheduling and Venue Management Platform",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "lint": "npm --prefix frontend run lint"
+  }
+}

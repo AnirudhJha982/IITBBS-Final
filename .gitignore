@@ -82,3 +82,5 @@ local.db
 # Exports and Temporary Data (Keep directory structure with .gitkeep)
 exports/*
 !exports/.gitkeep
+!exports/schedule.json
+!exports/schedule_after.json

@@ -11,7 +11,8 @@ export function Header() {
     // Quick probe to backend health endpoint
     const checkApi = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/v1/health", { method: "GET" });
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+        const res = await fetch(`${baseUrl}/health`, { method: "GET" });
         if (res.ok) {
           setApiStatus("online");
         } else {
