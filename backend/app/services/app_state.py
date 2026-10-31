@@ -58,4 +58,3 @@ async def seed_state(key: str, value: Dict[str, Any]) -> None:
         except IntegrityError:
             await session.rollback()
 
-\n
