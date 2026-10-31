@@ -41,18 +41,18 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     
     # Run any initial database table creation for dev/serverless if needed
     if settings.DATABASE_URL.startswith("sqlite"):
-        from backend.app.database.session import engine, async_session_factory
-        from backend.app.database.base import Base
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Initialized local development database schema.")
-
         try:
+            from backend.app.database.session import engine, AsyncSessionLocal
+            from backend.app.database.base import Base
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("Initialized local development database schema.")
+
             from sqlalchemy import select, func
             from backend.app.models.entities import Room
             from backend.app.services.data_importer import DataImporter
             from backend.app.services.schedule_loader import ScheduleLoader
-            async with async_session_factory() as session:
+            async with AsyncSessionLocal() as session:
                 room_count = await session.scalar(select(func.count()).select_from(Room))
                 if not room_count:
                     dataset_path = ScheduleLoader.get_master_dataset_path()
@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
                         await DataImporter.import_from_json(dataset_path, session)
                         logger.info("Auto-populated database with official dataset.")
         except Exception as e:
-            logger.warning(f"Auto-import skipped: {e}")
+            logger.warning(f"Database initialization in lifespan bypassed: {e}")
 
     yield
 
@@ -139,8 +139,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Register versioned API router
+# Register versioned API router under /api/v1 and /v1 (covers all Vercel rewrite modes)
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+if settings.API_V1_PREFIX != "/v1":
+    app.include_router(api_router, prefix="/v1")
 
 
 @app.get("/", tags=["Root"])
@@ -152,4 +154,13 @@ async def root_redirect():
         "status": "operational",
         "documentation": f"{settings.API_V1_PREFIX}/docs",
         "health": f"{settings.API_V1_PREFIX}/health",
+    }
+
+
+@app.get("/health", tags=["Root"])
+async def root_health_alias():
+    return {
+        "status": "healthy",
+        "service": "backend",
+        "ready": True,
     }

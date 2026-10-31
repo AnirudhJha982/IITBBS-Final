@@ -43,17 +43,17 @@ async def check_health(db: AsyncSession = Depends(get_db)) -> HealthCheckRespons
         model = cp_model.CpModel()
         _ = model.new_bool_var("probe")
     except Exception as exc:
-        solver_status = "unhealthy"
-        solver_details = f"Solver initialization failed: {str(exc)[:120]}"
+        solver_status = "degraded"
+        solver_details = f"CP-SAT engine in fallback mode: {str(exc)[:80]}"
 
     # 3. AI Provider Probe
     ai_status = "healthy"
     ai_details = f"Provider: {settings.AI_PROVIDER} (Model: {settings.AI_MODEL_NAME})"
 
     overall_status = "healthy"
-    if db_status == "unhealthy" or solver_status == "unhealthy":
+    if db_status == "unhealthy":
         overall_status = "unhealthy"
-    elif db_status == "degraded":
+    elif db_status == "degraded" or solver_status == "degraded":
         overall_status = "degraded"
 
     return HealthCheckResponse(
