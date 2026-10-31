@@ -8,13 +8,13 @@ This checklist tracks the exact prerequisites and ground-truth artifacts require
 
 | File Name | Format | Status | Expected Contents & Verification Target |
 | :--- | :---: | :---: | :--- |
-| `cit_public.json` | JSON | ⏳ Awaiting | Master institutional schema containing: <br>• **27 Rooms** (capacities, types, blocks, AV equipment)<br>• **40 Faculty Members** (department, maximum load constraints)<br>• **14 Student Groups** (cohort sizes, semester levels)<br>• **62 Courses** (credit breakdown, theory vs. lab)<br>• **189 Weekly Sessions** (contact hours totaling 243 hours) |
-| `validator.py` | Python | ⏳ Awaiting | **Canonical independent constraint verification script.** <br>Must be imported or executed directly by `OfficialValidatorAdapter` without modifications. |
-| `sample_disruption.json` | JSON | ⏳ Awaiting | Emergency room repair or faculty sick-leave scenario. Used to test minimum-displacement recalculation. |
-| `sample_schedule.json` | JSON | ⏳ Awaiting | Reference schema defining exact session export keys, slot naming, and time interval conventions. |
-| `spectra_bookings.*` | JSON/CSV | ⏳ Awaiting | **25 Spectra booking requests** with event timestamps, room preferences, and expected attendance. |
-| `midsem_exams.*` | JSON/CSV | ⏳ Awaiting | **41 Midsemester examinations** requiring conflict-free hall allocations and single-invigilation duties. |
-| `export_format.md` / `README.md` | Markdown | ⏳ Awaiting | Official guidelines for final JSON/CSV submission formatting. |
+| `cit_public.json` | JSON | ❌ Not Located | Master institutional schema containing: <br>• **27 Rooms** (capacities, types, blocks, AV equipment)<br>• **40 Faculty Members** (department, maximum load constraints)<br>• **14 Student Groups** (cohort sizes, semester levels)<br>• **62 Courses** (credit breakdown, theory vs. lab)<br>• **189 Weekly Sessions** (contact hours totaling 243 hours) |
+| `validator.py` | Python | ❌ Not Located | **Canonical independent constraint verification script.** <br>Must be provided by hackathon organizers. |
+| `sample_disruption.json` | JSON | ❌ Not Located | Emergency room repair or faculty sick-leave scenario. |
+| `sample_schedule.json` | JSON | ❌ Not Located | Reference schema defining exact session export keys and slot naming. |
+| `spectra_bookings.*` | JSON/CSV | ❌ Not Located | **25 Spectra booking requests** with event timestamps and room preferences. |
+| `midsem_exams.*` | JSON/CSV | ❌ Not Located | **41 Midsemester examinations** with conflict-free hall allocations. |
+| `export_format.md` / `README.md` | Markdown | ❌ Not Located | Official guidelines for final JSON/CSV submission formatting. |
 
 ---
 
@@ -32,3 +32,21 @@ This checklist tracks the exact prerequisites and ground-truth artifacts require
    - Implement the mathematical optimization model in `backend/app/scheduling/engine.py` to schedule all 189 sessions and 243 contact hours across 27 rooms with 0 hard violations.
 6. **Spectra Conflict Evaluation**:
    - Hook up `backend/app/services/booking_engine.py` to evaluate the 25 Spectra requests against the generated master timetable.
+
+---
+
+## 3. Local Filesystem Search Audit Log (Executed 2026-10-31)
+
+A systematic search across the user environment was conducted with the following results:
+
+- `Final IIT BBS/data/official/`: Contains only `.gitkeep`.
+- `Final IIT BBS/` (Workspace Root): No starter pack datasets found.
+- `C:\Users\jhaan\OneDrive\Desktop\`: No matching datasets or hackathon archives.
+- `C:\Users\jhaan\OneDrive\Documents\`: No matching datasets.
+- `C:\Users\jhaan\Documents\`: No matching datasets.
+- `C:\Users\jhaan\Downloads\`: No starter pack ZIPs or dataset files.
+- `C:\Users\jhaan\Projects\`: No Chitkara dataset files.
+- `C:\Users\jhaan\OneDrive\Desktop\Projects\IITBBS\`: Contains only the separate `life-rpg` project.
+
+**Conclusion:** The official starter pack has not been placed on this machine. Scheduling optimization remains paused to preserve hackathon integrity until the real files are provided.
+
