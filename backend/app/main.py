@@ -72,7 +72,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
-    logger.info("CampusOS AI service is shutting down gracefully.")
+    logger.info("vetogrid service is shutting down gracefully.")
 
 
 def _initial_booking_state(dataset: dict, schedule: dict) -> dict:

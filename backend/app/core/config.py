@@ -12,7 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # Application Metadata
-    APP_NAME: str = "CampusOS AI - Intelligent Campus Scheduling & Venue Management Platform"
+    APP_NAME: str = "vetogrid - Intelligent Campus Scheduling & Venue Management Platform"
     APP_VERSION: str = "1.0.0-alpha"
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
