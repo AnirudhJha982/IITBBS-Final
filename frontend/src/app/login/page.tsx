@@ -18,60 +18,36 @@ import { useAuth } from "@/lib/auth-context";
 
 const DEMO_ACCOUNTS = [
   {
-    id: "timetable_coordinator",
-    label: "Timetable Coordinator",
-    badge: "Primary Actor",
-    email: "coordinator@chitkara.edu.in",
-    password: "Coord@2026",
-  },
-  {
-    id: "academic_dean",
-    label: "Academic Dean",
-    badge: "Approver",
-    email: "dean@chitkara.edu.in",
-    password: "Dean@2026",
+    id: "admin_dean",
+    label: "Admin (Dean's office)",
+    badge: "Full Control",
+    email: "admin@chitkara.edu.in",
+    password: "Admin@2026",
+    description: "Everything: generates timetable, approves timetable changes & bookings moving classes, changes priority order",
   },
   {
     id: "department_coordinator",
-    label: "Department Coordinator",
-    badge: "Department",
+    label: "Department coordinator",
+    badge: "Dept Lead",
     email: "dept.coordinator@chitkara.edu.in",
     password: "DeptCoord@2026",
-  },
-  {
-    id: "venue_manager",
-    label: "Venue Manager",
-    badge: "Spectra",
-    email: "venues@chitkara.edu.in",
-    password: "Venue@2026",
+    description: "Requests changes to dept sessions, books rooms for dept events, approves lab bookings",
   },
   {
     id: "faculty",
-    label: "Faculty Member",
+    label: "Faculty",
     badge: "Instructor",
     email: "faculty@chitkara.edu.in",
     password: "Faculty@2026",
-  },
-  {
-    id: "student_representative",
-    label: "Student Rep",
-    badge: "Viewer",
-    email: "student@chitkara.edu.in",
-    password: "Student@2026",
+    description: "Views own timetable, marks unavailability, requests extra or moved sessions",
   },
   {
     id: "club_representative",
-    label: "Club Representative",
+    label: "Club representative",
     badge: "Club Requests",
     email: "club@chitkara.edu.in",
     password: "Club@2026",
-  },
-  {
-    id: "super_admin",
-    label: "Super Admin",
-    badge: "Admin",
-    email: "admin@chitkara.edu.in",
-    password: "Admin@2026",
+    description: "Submits and cancels venue requests, sees status and reason for decisions",
   },
 ];
 
@@ -80,9 +56,9 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const { user, refresh } = useAuth();
 
-  const [email, setEmail] = useState("coordinator@chitkara.edu.in");
-  const [password, setPassword] = useState("Coord@2026");
-  const [selectedRole, setSelectedRole] = useState("timetable_coordinator");
+  const [email, setEmail] = useState("admin@chitkara.edu.in");
+  const [password, setPassword] = useState("Admin@2026");
+  const [selectedRole, setSelectedRole] = useState("admin_dean");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -142,35 +118,43 @@ function LoginForm() {
 
       <form onSubmit={handleLogin}>
         <CardContent className="space-y-4">
-          {/* Demo Role Selector */}
+          {/* 4 Official Authorized Roles */}
           <div>
-            <label className="text-xs font-medium text-slate-300 block mb-1.5">
-              Quick Demo Access (RBAC Simulation)
-            </label>
-            <div className="grid grid-cols-1 gap-1.5 max-h-44 overflow-y-auto pr-1">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-medium text-slate-300">
+                Official Institutional Roles (4 Accounts)
+              </label>
+              <span className="text-[10px] text-blue-400 font-medium">Click to select</span>
+            </div>
+            <div className="grid grid-cols-1 gap-1.5 max-h-56 overflow-y-auto pr-1">
               {DEMO_ACCOUNTS.map((acc) => (
                 <button
                   type="button"
                   key={acc.id}
                   onClick={() => handleDemoSelect(acc)}
-                  className={`flex items-center justify-between p-2 rounded-lg text-xs font-medium border text-left transition-colors ${
+                  className={`flex flex-col p-2.5 rounded-lg text-xs font-medium border text-left transition-all ${
                     selectedRole === acc.id
-                      ? "bg-blue-600/15 border-blue-500/40 text-blue-300"
+                      ? "bg-blue-600/20 border-blue-500/50 text-blue-200 ring-1 ring-blue-500/30"
                       : "bg-surface-muted/50 border-surface-border text-slate-400 hover:text-slate-200 hover:border-slate-500"
                   }`}
                 >
-                  <div>
-                    <span>{acc.label}</span>
-                    <span className="text-[10px] text-slate-500 ml-2 font-mono">
-                      {acc.email}
-                    </span>
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-100">{acc.label}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {acc.email}
+                      </span>
+                    </div>
+                    <Badge
+                      variant={selectedRole === acc.id ? "secondary" : "outline"}
+                      className="text-[10px] shrink-0"
+                    >
+                      {acc.badge}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant={selectedRole === acc.id ? "secondary" : "outline"}
-                    className="text-[10px] shrink-0"
-                  >
-                    {acc.badge}
-                  </Badge>
+                  <p className="mt-1 text-[11px] text-slate-400 line-clamp-1">
+                    {acc.description}
+                  </p>
                 </button>
               ))}
             </div>

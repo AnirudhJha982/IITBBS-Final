@@ -54,7 +54,7 @@ const USER_STORE: Record<string, { hash: string; user: AuthUser }> = {
     user: {
       userId: "usr-001",
       email: "admin@chitkara.edu.in",
-      name: "Dr. Rajiv Kumar",
+      name: "Admin (Dean's Office)",
       role: "super_admin",
     },
   },
@@ -204,19 +204,19 @@ export function buildClearCookieHeader(): string {
 // ── UI helpers ─────────────────────────────────────────────────────────────
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  super_admin: "Super Administrator",
+  super_admin: "Admin (Dean's office)",
   timetable_coordinator: "Timetable Coordinator",
   academic_dean: "Academic Dean",
-  department_coordinator: "Department Coordinator",
+  department_coordinator: "Department coordinator",
   department_head: "Department Head",
-  faculty: "Faculty Member",
-  club_representative: "Club Representative",
+  faculty: "Faculty",
+  club_representative: "Club representative",
   venue_manager: "Venue Manager",
   student_representative: "Student Representative",
 };
 
 export const ROLE_INITIALS: Record<UserRole, string> = {
-  super_admin: "SA",
+  super_admin: "AD",
   timetable_coordinator: "TC",
   academic_dean: "AD",
   department_coordinator: "DC",
@@ -245,11 +245,11 @@ export const PERMISSIONS = {
   canGenerateTimetable: (r: UserRole) =>
     ["super_admin", "timetable_coordinator"].includes(r),
   canEditTimetable: (r: UserRole) =>
-    ["super_admin", "timetable_coordinator"].includes(r),
+    ["super_admin", "timetable_coordinator", "department_coordinator"].includes(r),
   canScheduleExams: (r: UserRole) =>
     ["super_admin", "timetable_coordinator"].includes(r),
   canApproveBookings: (r: UserRole) =>
-    ["super_admin", "academic_dean", "venue_manager"].includes(r),
+    ["super_admin", "academic_dean", "venue_manager", "department_coordinator"].includes(r),
   canManageRooms: (r: UserRole) =>
     ["super_admin", "venue_manager"].includes(r),
   canViewAnalytics: (r: UserRole) =>
@@ -259,11 +259,11 @@ export const PERMISSIONS = {
   canManualSchedule: (r: UserRole) =>
     ["super_admin", "timetable_coordinator"].includes(r),
   canReschedule: (r: UserRole) =>
-    ["super_admin", "timetable_coordinator", "academic_dean"].includes(r),
+    ["super_admin", "timetable_coordinator", "academic_dean", "department_coordinator"].includes(r),
   canViewFaculty: (r: UserRole) =>
     !["student_representative", "club_representative"].includes(r),
   canViewApprovals: (r: UserRole) =>
-    ["super_admin", "academic_dean", "venue_manager"].includes(r),
+    ["super_admin", "academic_dean", "venue_manager", "department_coordinator"].includes(r),
   canRequestBooking: (r: UserRole) =>
     ["super_admin", "department_coordinator", "faculty", "club_representative", "venue_manager"].includes(r),
 };

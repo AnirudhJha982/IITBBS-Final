@@ -87,10 +87,14 @@ ROLE_PERMISSIONS: dict[Role, Set[Permission]] = {
     },
     Role.DEPARTMENT_COORDINATOR: {
         Permission.VIEW_TIMETABLE,
+        Permission.EDIT_TIMETABLE,
         Permission.VIEW_EXAMS,
         Permission.VIEW_ROOMS,
         Permission.REQUEST_BOOKING,
+        Permission.APPROVE_BOOKING,
+        Permission.REJECT_BOOKING,
         Permission.REPORT_DISRUPTION,
+        Permission.VIEW_ANALYTICS,
     },
     Role.CLUB_REPRESENTATIVE: {
         Permission.VIEW_ROOMS,
