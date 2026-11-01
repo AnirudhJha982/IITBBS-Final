@@ -1,11 +1,22 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 import { AuthProvider } from "@/lib/auth-context";
+import { PwaRegistrar } from "@/components/shared/PwaRegistrar";
 
 export const metadata: Metadata = {
   title: "CampusOS AI — Intelligent Campus Scheduling & Venue Management",
   description:
     "Next-generation AI-powered academic scheduling, automated clash-free timetable generation, and venue management platform for Chitkara Institute of Technology.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "CampusOS",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
@@ -16,7 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-navy-950 text-slate-100 min-h-screen antialiased selection:bg-blue-100 selection:text-blue-900">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <PwaRegistrar />
+        </AuthProvider>
       </body>
     </html>
   );

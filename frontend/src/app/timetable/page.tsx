@@ -125,6 +125,7 @@ export default function TimetablePage() {
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
   // Filters
+  const [departmentFilter, setDepartmentFilter] = useState("");
   const [dayFilter, setDayFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [groupFilter, setGroupFilter] = useState("");
@@ -170,6 +171,8 @@ export default function TimetablePage() {
   };
 
   // Build filter option lists
+  const departmentsList = ["CSE", "ECE", "ME", "CE", "EE", "MA", "PH", "HSS"];
+
   const groupsList = Array.from(
     new Set(sessions.flatMap((s) => s.groups ?? []))
   ).sort();
@@ -189,6 +192,22 @@ export default function TimetablePage() {
   // Filtered sessions
   const filtered = sessions
     .filter((s) => {
+      if (departmentFilter) {
+        const d = departmentFilter.toUpperCase();
+        const facDept = (s.department || "").toUpperCase();
+        const courseId = (s.course_id || "").toUpperCase();
+        const matches =
+          facDept === d ||
+          (d === "CSE" && (courseId.startsWith("CS") || facDept.includes("CS"))) ||
+          (d === "ECE" && (courseId.startsWith("EC") || facDept.includes("EC"))) ||
+          (d === "ME" && (courseId.startsWith("ME") || facDept.includes("ME"))) ||
+          (d === "CE" && (courseId.startsWith("CE") || facDept.includes("CE"))) ||
+          (d === "EE" && (courseId.startsWith("EE") || facDept.includes("EE"))) ||
+          (d === "MA" && (courseId.startsWith("MA") || facDept.includes("MA"))) ||
+          (d === "PH" && (courseId.startsWith("PH") || facDept.includes("PH"))) ||
+          (d === "HSS" && (courseId.startsWith("HS") || courseId.startsWith("WS") || facDept.includes("HSS")));
+        if (!matches) return false;
+      }
       if (dayFilter && s.day !== dayFilter) return false;
       if (typeFilter && s.kind !== typeFilter) return false;
       if (groupFilter && !(s.groups || []).includes(groupFilter)) return false;
@@ -204,10 +223,11 @@ export default function TimetablePage() {
     });
 
   const hasActiveFilters = Boolean(
-    dayFilter || typeFilter || groupFilter || facultyFilter || roomFilter
+    departmentFilter || dayFilter || typeFilter || groupFilter || facultyFilter || roomFilter
   );
 
   const clearFilters = () => {
+    setDepartmentFilter("");
     setDayFilter("");
     setTypeFilter("");
     setGroupFilter("");
@@ -261,6 +281,20 @@ export default function TimetablePage() {
 
           {/* Filter Dropdowns styled like Examinations page */}
           <div className="flex flex-wrap items-center gap-2.5">
+            {/* Department Filter (Feature 5) */}
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="h-11 min-w-[160px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm font-medium text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">All Departments</option>
+              {departmentsList.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept} Department
+                </option>
+              ))}
+            </select>
+
             {/* Day Filter */}
             <select
               value={dayFilter}
@@ -335,7 +369,7 @@ export default function TimetablePage() {
                 onClick={clearFilters}
                 className="h-11 rounded-lg border border-[#dce4ee] bg-white px-3.5 text-xs font-semibold text-[#5b6a80] shadow-sm transition-colors hover:bg-slate-50 hover:text-[#18243a]"
               >
-                Clear
+                Clear All Filters
               </button>
             )}
 
@@ -369,12 +403,13 @@ export default function TimetablePage() {
                   <tr className="border-b border-[#e5ebf2] bg-[#fbfcfe] text-[12px] font-semibold uppercase tracking-wide text-[#5b6a80]">
                     <th className="w-[120px] px-4 py-4">Session ID</th>
                     <th className="w-[190px] px-4 py-4">Slot (Day &amp; Period)</th>
-                    <th className="w-[220px] px-4 py-4">Associated Course</th>
+                    <th className="w-[210px] px-4 py-4">Associated Course</th>
+                    <th className="w-[105px] px-4 py-4">Department</th>
                     <th className="w-[110px] px-4 py-4">Session Type</th>
-                    <th className="w-[160px] px-4 py-4">Student Groups</th>
-                    <th className="w-[210px] px-4 py-4">Faculty in Charge</th>
-                    <th className="w-[170px] px-4 py-4">Allocated Venue</th>
-                    <th className="w-[150px] px-4 py-4">Class Size</th>
+                    <th className="w-[150px] px-4 py-4">Student Groups</th>
+                    <th className="w-[200px] px-4 py-4">Faculty in Charge</th>
+                    <th className="w-[160px] px-4 py-4">Allocated Venue</th>
+                    <th className="w-[140px] px-4 py-4">Class Size</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#e8edf3] text-sm text-[#344157]">
@@ -410,6 +445,13 @@ export default function TimetablePage() {
                       <td className="px-4 py-4">
                         <div className="font-mono font-bold text-[#1f2b3f]">{s.course_id}</div>
                         <div className="text-xs text-[#526077] line-clamp-1">{s.course_title}</div>
+                      </td>
+
+                      {/* Department */}
+                      <td className="px-4 py-4">
+                        <span className="inline-flex items-center rounded-md border border-[#c7d2fe] bg-[#eef2ff] px-2.5 py-1 text-xs font-bold text-[#4338ca]">
+                          {s.department || "—"}
+                        </span>
                       </td>
 
                       {/* Session Type */}

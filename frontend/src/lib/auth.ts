@@ -268,3 +268,48 @@ export const PERMISSIONS = {
     ["super_admin", "department_coordinator", "faculty", "club_representative", "venue_manager"].includes(r),
 };
 
+// ── Password Reset (HMAC-SHA256, 15m expiration, single-use) ────────────────
+
+const USED_RESET_TOKENS = new Set<string>();
+
+export function createPasswordResetToken(email: string): string | null {
+  const normEmail = email.toLowerCase().trim();
+  if (!USER_STORE[normEmail]) return null;
+  const authSecret = getAuthSecret() || DEVELOPMENT_AUTH_SECRET;
+  const expiresAt = Date.now() + 15 * 60 * 1000; // 15 mins
+  const nonce = createHash("sha256").update(`${Math.random()}-${Date.now()}`).digest("hex").slice(0, 16);
+  const payload = Buffer.from(JSON.stringify({ email: normEmail, exp: expiresAt, nonce })).toString("base64url");
+  const sig = createHmac("sha256", authSecret).update(payload).digest("base64url");
+  return `${payload}.${sig}`;
+}
+
+export function verifyPasswordResetToken(token: string): { email: string } | null {
+  try {
+    if (USED_RESET_TOKENS.has(token)) return null;
+    const authSecret = getAuthSecret() || DEVELOPMENT_AUTH_SECRET;
+    const dot = token.lastIndexOf(".");
+    if (dot < 0) return null;
+    const payload = token.slice(0, dot);
+    const sig = token.slice(dot + 1);
+    const expectedSig = createHmac("sha256", authSecret).update(payload).digest("base64url");
+    if (sig !== expectedSig) return null;
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (!data.email || !data.exp) return null;
+    if (Date.now() > data.exp) return null; // expired
+    return { email: data.email };
+  } catch {
+    return null;
+  }
+}
+
+export function updateUserPassword(email: string, newPass: string, tokenToInvalidate?: string): boolean {
+  const normEmail = email.toLowerCase().trim();
+  if (!USER_STORE[normEmail]) return false;
+  USER_STORE[normEmail].hash = sha256(newPass);
+  if (tokenToInvalidate) {
+    USED_RESET_TOKENS.add(tokenToInvalidate);
+  }
+  return true;
+}
+
+

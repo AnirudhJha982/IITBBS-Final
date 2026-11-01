@@ -307,3 +307,58 @@ async def export_schedule(current_user: CurrentUser = Depends(get_current_user))
         content=schedule,
         headers={"Content-Disposition": "attachment; filename=schedule.json"}
     )
+
+
+@router.post("/solve-async")
+async def trigger_async_solve(
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Submits an asynchronous CP-SAT solver job and returns tracking handle."""
+    if current_user.role not in {"super_admin", "timetable_coordinator"}:
+        raise HTTPException(status_code=403, detail="Permission denied.")
+    
+    from backend.app.scheduling.worker import solver_job_manager
+    dataset = await read_state("official_dataset") or ScheduleLoader.load_dataset()
+    job = solver_job_manager.submit_job(
+        dataset=dataset,
+        submitted_by=current_user.email,
+        dataset_name="cit_public.json"
+    )
+    return {
+        "success": True,
+        "message": "Asynchronous CP-SAT scheduling job initiated.",
+        "job_id": job.job_id,
+        "status": job.status,
+        "progress_pct": job.progress_pct,
+        "origin": job.origin,
+    }
+
+
+@router.get("/jobs")
+async def list_solver_jobs(
+    limit: int = Query(10, ge=1, le=50),
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Lists recent solver jobs and their validation/origin statuses."""
+    from backend.app.scheduling.worker import solver_job_manager
+    return {
+        "success": True,
+        "jobs": solver_job_manager.list_jobs(limit=limit),
+    }
+
+
+@router.get("/jobs/{job_id}")
+async def get_solver_job(
+    job_id: str,
+    current_user: CurrentUser = Depends(get_current_user),
+):
+    """Returns detailed solver progress, origin, and validation diagnostics."""
+    from backend.app.scheduling.worker import solver_job_manager
+    job = solver_job_manager.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Solver job {job_id} not found.")
+    return {
+        "success": True,
+        "job": job.to_dict(),
+    }
+

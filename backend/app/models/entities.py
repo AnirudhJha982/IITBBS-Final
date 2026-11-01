@@ -184,3 +184,55 @@ class ApplicationState(Base, TimestampMixin):
 
     key: Mapped[str] = mapped_column(String(128), primary_key=True)
     value: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
+
+
+class TimetableVersion(Base, TimestampMixin):
+    """Versioned timetable snapshots for auditing and rollback."""
+    __tablename__ = "timetable_versions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    version_tag: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    created_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    hard_violations: Mapped[int] = mapped_column(Integer, default=0)
+    soft_penalty: Mapped[int] = mapped_column(Integer, default=0)
+    schedule_data: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="active")  # active, archived, proposal
+
+
+class NotificationRecordEntity(Base, TimestampMixin):
+    """Outbound and in-app notification audit log with delivery tracking."""
+    __tablename__ = "notifications"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    recipient: Mapped[str] = mapped_column(String(255), index=True, nullable=False)
+    channel: Mapped[str] = mapped_column(String(32), nullable=False)  # email, sms, whatsapp, in_app
+    category: Mapped[str] = mapped_column(String(64), nullable=False)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="pending")  # delivered, pending, failed, simulated_dev
+    provider: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
+class ReschedulingProposalEntity(Base, TimestampMixin):
+    """Minimal perturbation rescheduling proposals."""
+    __tablename__ = "rescheduling_proposals"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    disruption_id: Mapped[str] = mapped_column(String(64), index=True, nullable=False)
+    disruption_data: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
+    moved_sessions: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list)
+    status: Mapped[str] = mapped_column(String(32), default="pending")  # pending, approved, rejected
+    approved_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+
+
+class UploadedDatasetEntity(Base, TimestampMixin):
+    """Archived and active uploaded academic datasets."""
+    __tablename__ = "uploaded_datasets"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    uploaded_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    content_json: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), default="active")
+
