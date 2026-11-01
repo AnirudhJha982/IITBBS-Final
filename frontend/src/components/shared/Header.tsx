@@ -2,15 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell, Activity, Terminal, LogOut, CheckCircle2, ShieldCheck, X } from "lucide-react";
+import { Search, Bell, Activity, LogOut, CheckCircle2, ShieldCheck, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { fetchBackend } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { ROLE_INITIALS, ROLE_LABELS } from "@/lib/auth";
 
 export function Header() {
   const router = useRouter();
-  const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -18,18 +16,6 @@ export function Header() {
 
   const notifRef = useRef<HTMLDivElement>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const checkApi = async () => {
-      try {
-        const res = await fetchBackend("/health", { method: "GET" });
-        setApiStatus(res.ok ? "online" : "offline");
-      } catch {
-        setApiStatus("offline");
-      }
-    };
-    checkApi();
-  }, []);
 
   // Close popovers when clicking outside
   useEffect(() => {
@@ -103,37 +89,6 @@ export function Header() {
 
       {/* Right Tools */}
       <div className="flex items-center gap-3">
-        {/* Backend API Status */}
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-surface-elevated/80 border border-surface-border text-xs">
-          <Activity
-            className={`w-3.5 h-3.5 ${
-              apiStatus === "online"
-                ? "text-emerald-400"
-                : apiStatus === "checking"
-                ? "text-amber-400 animate-pulse"
-                : "text-slate-400"
-            }`}
-          />
-          <span className="text-[11px] font-medium text-slate-300">
-            API:{" "}
-            {apiStatus === "online" ? (
-              <span className="text-emerald-400 font-semibold">Online</span>
-            ) : apiStatus === "checking" ? (
-              <span className="text-amber-400">Probing...</span>
-            ) : (
-              <span className="text-slate-400">Standby</span>
-            )}
-          </span>
-        </div>
-
-        {/* CP-SAT Engine Status */}
-        <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-md bg-surface-elevated/80 border border-surface-border text-xs">
-          <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="text-[11px] font-medium text-slate-300">
-            CP-SAT: <span className="text-cyan-400 font-semibold">0 Violations</span>
-          </span>
-        </div>
-
         {/* Notifications Popover */}
         <div className="relative" ref={notifRef}>
           <button

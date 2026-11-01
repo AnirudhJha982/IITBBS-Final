@@ -21,7 +21,7 @@ interface AuthContextValue {
   isLoading: boolean;
   role: UserRole | null;
   logout: () => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<AuthUser | null>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -29,7 +29,7 @@ const AuthContext = createContext<AuthContextValue>({
   isLoading: true,
   role: null,
   logout: async () => {},
-  refresh: async () => {},
+  refresh: async () => null,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -40,15 +40,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/v1/auth/me");
+      const res = await fetch("/api/v1/auth/me", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user ?? null);
-      } else {
-        setUser(null);
+        const authenticatedUser = (data.user ?? null) as AuthUser | null;
+        setUser(authenticatedUser);
+        return authenticatedUser;
       }
+      setUser(null);
+      return null;
     } catch {
       setUser(null);
+      return null;
     } finally {
       setIsLoading(false);
     }

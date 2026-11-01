@@ -139,7 +139,7 @@ export function Sidebar() {
       {/* Brand Header */}
       <div className="h-16 flex items-center px-6 border-b border-surface-border gap-3">
         <img
-          src="/vetogrid-logo.jpg"
+          src="/vetogrid-eagle.svg"
           alt="vetogrid logo"
           className="h-9 w-9 rounded-lg object-contain bg-[#f7f6f2]"
         />

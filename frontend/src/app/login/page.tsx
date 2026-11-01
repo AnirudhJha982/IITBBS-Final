@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useAuth } from "@/lib/auth-context";
+import { ROLE_HOME, type UserRole } from "@/lib/auth";
 
 const DEMO_ACCOUNTS = [
   {
@@ -51,6 +52,8 @@ const DEMO_ACCOUNTS = [
   },
 ];
 
+const ROLE_HOME_FALLBACK = "/dashboard";
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,7 +68,7 @@ function LoginForm() {
   // If already logged in, redirect
   useEffect(() => {
     if (user) {
-      const next = searchParams.get("next") || "/dashboard";
+      const next = searchParams.get("next") || ROLE_HOME[user.role as UserRole] || ROLE_HOME_FALLBACK;
       router.replace(next);
     }
   }, [user, router, searchParams]);
@@ -97,9 +100,13 @@ function LoginForm() {
       }
 
       // Refresh auth context then navigate
-      await refresh();
-      const next = searchParams.get("next") || data.redirectTo || "/dashboard";
-      router.push(next);
+      const sessionUser = await refresh();
+      if (!sessionUser) {
+        setError("Sign-in succeeded, but your session could not be verified. Please try again.");
+        return;
+      }
+      const next = searchParams.get("next") || data.redirectTo || ROLE_HOME[sessionUser.role] || ROLE_HOME_FALLBACK;
+      router.replace(next);
     } catch {
       setError("Network error. Please check your connection.");
     } finally {
@@ -259,7 +266,7 @@ export default function LoginPage() {
           <div className="absolute -top-20 -right-24 w-72 h-72 rounded-full bg-[#d9aa9b]/45" />
           <div className="absolute -bottom-28 -left-24 w-80 h-80 rounded-full bg-[#a39118]/20" />
           <div className="relative z-10 flex items-center gap-4">
-            <img src="/vetogrid-logo.jpg" alt="vetogrid logo" className="w-16 h-16 rounded-2xl object-contain bg-[#f7f2e7] shadow-sm" />
+            <img src="/vetogrid-eagle.svg" alt="vetogrid logo" className="w-16 h-16 object-contain" />
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#45281e]">vetogrid</h1>
               <p className="mt-1 text-sm text-[#725943]">Intelligent campus scheduling</p>

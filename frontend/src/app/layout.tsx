@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   description:
     "Next-generation AI-powered academic scheduling, automated clash-free timetable generation, and venue management platform for Chitkara Institute of Technology.",
   manifest: "/manifest.json",
+  icons: { icon: "/vetogrid-eagle.svg", apple: "/vetogrid-eagle.svg" },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

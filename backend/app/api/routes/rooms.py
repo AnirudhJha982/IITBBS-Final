@@ -21,10 +21,11 @@ async def get_all_rooms(current_user: CurrentUser = Depends(get_current_user)):
 
     # Count scheduled hours per room
     room_hours = {r["id"]: 0 for r in rooms}
+    session_defs = {session["id"]: session for session in data.get("sessions", [])}
     for s in scheduled:
         rid = s.get("room_id")
         if rid in room_hours:
-            sess_meta = next((sm for sm in data.get("sessions", []) if sm["id"] == s.get("session_id")), None)
+            sess_meta = session_defs.get(s.get("session_id"))
             dur = sess_meta.get("duration", 1) if sess_meta else 1
             room_hours[rid] += dur
 

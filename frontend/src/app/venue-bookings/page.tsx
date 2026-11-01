@@ -44,12 +44,16 @@ export default function VenueBookingsPage() {
   const loadBookings = async () => {
     try {
       setLoading(true);
-      const [res, roomRes] = await Promise.all([fetchBackend("/bookings/"), fetchBackend("/rooms/")]);
+      const needsRoomCatalog = role === "super_admin" || role === "venue_manager";
+      const [res, roomRes] = await Promise.all([
+        fetchBackend("/bookings/"),
+        needsRoomCatalog ? fetchBackend("/rooms/") : Promise.resolve(null),
+      ]);
       if (res.ok) {
         const data = await res.json();
         setBookings(data.bookings || []);
       }
-      if (roomRes.ok) {
+      if (roomRes?.ok) {
         const roomData = await roomRes.json();
         const availableRooms = roomData.rooms || [];
         setRooms(availableRooms);
@@ -89,7 +93,9 @@ export default function VenueBookingsPage() {
       const data = await res.json();
       if (data.success) {
         setActionMsg(data.message || `${requestId} updated.`);
-        await loadBookings();
+        if (data.booking) {
+          setBookings((current) => current.map((item) => item.request_id === requestId ? data.booking : item));
+        }
       } else {
         const detail = data.message;
         setActionMsg(typeof detail === "string" ? detail : detail?.message || data.error?.details?.[0]?.msg || "Action failed; no decision was saved.");
@@ -133,7 +139,7 @@ export default function VenueBookingsPage() {
       setActionMsg(data.message);
       setRequestText("");
       setDraft(null);
-      await loadBookings();
+      if (data.booking) setBookings((current) => [data.booking, ...current.filter((item) => item.request_id !== data.booking.request_id)]);
     } catch (error) {
       setActionMsg(error instanceof Error ? error.message : "Booking request was not submitted.");
     } finally {
@@ -154,7 +160,7 @@ export default function VenueBookingsPage() {
       }
       setActionMsg(result.message);
       setManualEvent((current) => ({ ...current, title: "", reason: "" }));
-      await loadBookings();
+      if (result.booking) setBookings((current) => [result.booking, ...current.filter((item) => item.request_id !== result.booking.request_id)]);
     } catch (error) {
       setActionMsg(error instanceof Error ? error.message : "Manual event was not saved.");
     } finally { setManualBusy(false); }
