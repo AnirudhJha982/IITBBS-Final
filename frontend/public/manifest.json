@@ -1,6 +1,6 @@
 {
-  "name": "vetogrid — Chitkara Institute of Technology",
-  "short_name": "vetogrid",
+  "name": "VetoGrid — Chitkara Institute of Technology",
+  "short_name": "VetoGrid",
   "description": "Intelligent Academic Timetable, Examinations & Venue Management Platform for Chitkara Institute of Technology",
   "start_url": "/timetable",
   "display": "standalone",

@@ -1097,7 +1097,7 @@ export async function POST(
       await sendNotification({
         recipient: normEmail,
         category: "password_reset",
-        title: "vetogrid — Password Reset Request",
+        title: "VetoGrid — Password Reset Request",
         message: `Password reset requested for your account. Single-use link (15m): ${resetUrl}`,
         channels: ["email", "in_app"],
       });

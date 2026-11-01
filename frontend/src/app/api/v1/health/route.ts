@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   return NextResponse.json({
     status: "healthy",
-    app_name: "vetogrid - Intelligent Campus Scheduling & Venue Management Platform",
+    app_name: "VetoGrid - Intelligent Campus Scheduling & Venue Management Platform",
     version: "1.0.0-alpha",
     environment: "production",
     database: {

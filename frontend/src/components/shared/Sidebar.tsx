@@ -140,12 +140,12 @@ export function Sidebar() {
       <div className="h-16 flex items-center px-6 border-b border-surface-border gap-3">
         <img
           src="/vetogrid-eagle.svg"
-          alt="vetogrid logo"
+          alt="VetoGrid logo"
           className="h-9 w-9 rounded-lg object-contain bg-[#f7f6f2]"
         />
         <div>
           <span className="font-bold text-sm tracking-tight text-slate-900 block">
-            vetogrid
+            VetoGrid
           </span>
           <span className="text-[10px] text-slate-400 block font-medium">
             Chitkara Institute of Technology

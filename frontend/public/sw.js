@@ -1,9 +1,9 @@
 /**
- * vetogrid - Production Service Worker
+ * VetoGrid - Production Service Worker
  * Provides offline timetable & examination caching, PWA installation, and network-first resilience.
  */
 
-const CACHE_NAME = "vetogrid-cache-v1";
+const CACHE_NAME = "VetoGrid-cache-v2";
 const STATIC_ASSETS = [
   "/",
   "/timetable",

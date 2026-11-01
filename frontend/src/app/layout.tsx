@@ -4,7 +4,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { PwaRegistrar } from "@/components/shared/PwaRegistrar";
 
 export const metadata: Metadata = {
-  title: "vetogrid — Intelligent Campus Scheduling & Venue Management",
+  title: "VetoGrid — Intelligent Campus Scheduling & Venue Management",
   description:
     "Next-generation AI-powered academic scheduling, automated clash-free timetable generation, and venue management platform for Chitkara Institute of Technology.",
   manifest: "/manifest.json",
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "vetogrid",
+    title: "VetoGrid",
   },
 };
 

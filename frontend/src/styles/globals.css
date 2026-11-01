@@ -47,7 +47,7 @@ body {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  animation: vg-gentle-float 3.4s ease-in-out infinite;
+  animation: vg-gentle-float 3.7s ease-in-out infinite;
 }
 
 .vg-eagle-flight {
@@ -59,9 +59,9 @@ body {
 
 .vg-eagle-mark { display: block; width: 100%; height: 100%; overflow: visible; }
 .vg-eagle-wing { transform-box: view-box; }
-.vg-eagle-wing-left { transform-origin: 50% 48%; animation: vg-wing-flap-left 2.8s cubic-bezier(.42, 0, .38, 1) infinite; }
-.vg-eagle-wing-right { transform-origin: 50% 48%; animation: vg-wing-flap-right 2.8s cubic-bezier(.42, 0, .38, 1) infinite; }
-.vg-eagle-body { transform-box: fill-box; transform-origin: center; animation: vg-eagle-glide 3.4s ease-in-out infinite; }
+.vg-eagle-wing-left { transform-origin: 50% 48%; animation: vg-wing-flap-left 3.1s cubic-bezier(.42, 0, .38, 1) infinite; }
+.vg-eagle-wing-right { transform-origin: 50% 48%; animation: vg-wing-flap-right 3.1s cubic-bezier(.42, 0, .38, 1) infinite; }
+.vg-eagle-body { transform-box: fill-box; transform-origin: center; animation: vg-eagle-glide 3.7s ease-in-out infinite; }
 
 .vg-loading-wordmark {
   margin: 1.05rem 0 0;
@@ -94,7 +94,7 @@ body {
   height: 100%;
   border-radius: inherit;
   background: linear-gradient(90deg, #bd806c, #c69a00 55%, #4b271c);
-  animation: vg-loading-sweep 1.65s cubic-bezier(.55, .05, .35, .95) infinite;
+  animation: vg-loading-sweep 1.95s cubic-bezier(.55, .05, .35, .95) infinite;
 }
 
 @keyframes vg-wing-flap-left {

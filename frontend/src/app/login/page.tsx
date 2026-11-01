@@ -117,7 +117,7 @@ function LoginForm() {
   return (
     <Card className="w-full border-0 shadow-none bg-transparent backdrop-blur-none text-slate-900">
       <CardHeader className="px-0 pt-0 pb-5">
-        <CardTitle className="text-2xl md:text-[28px] font-bold tracking-tight text-[#40251f]">Sign in to vetogrid</CardTitle>
+        <CardTitle className="text-2xl md:text-[28px] font-bold tracking-tight text-[#40251f]">Sign in to VetoGrid</CardTitle>
         <CardDescription>
           Select a demo role or enter your institutional credentials.
         </CardDescription>
@@ -266,9 +266,9 @@ export default function LoginPage() {
           <div className="absolute -top-20 -right-24 w-72 h-72 rounded-full bg-[#d9aa9b]/45" />
           <div className="absolute -bottom-28 -left-24 w-80 h-80 rounded-full bg-[#a39118]/20" />
           <div className="relative z-10 flex items-center gap-4">
-            <img src="/vetogrid-eagle.svg" alt="vetogrid logo" className="w-16 h-16 object-contain" />
+            <img src="/vetogrid-eagle.svg" alt="VetoGrid logo" className="w-16 h-16 object-contain" />
             <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#45281e]">vetogrid</h1>
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#45281e]">VetoGrid</h1>
               <p className="mt-1 text-sm text-[#725943]">Intelligent campus scheduling</p>
             </div>
           </div>
@@ -280,24 +280,16 @@ export default function LoginPage() {
               <p className="mt-4 text-sm leading-relaxed text-[#765f4a]">Timetables, spaces, and campus events come together in one clear place.</p>
             </div>
 
-            <svg viewBox="0 0 560 270" role="img" aria-label="Illustration of a campus building" className="w-full max-w-xl h-40 md:h-56 lg:h-60 drop-shadow-sm">
-              <ellipse cx="282" cy="244" rx="265" ry="20" fill="#c8b293" opacity=".55" />
-              <path d="M60 116 271 47l218 69v127H60z" fill="#e8d7bf" stroke="#8c6b51" strokeWidth="3" />
-              <path d="m60 116 211-69v196H60z" fill="#f3e6d2" stroke="#8c6b51" strokeWidth="3" />
-              <path d="m271 47 218 69H271z" fill="#dcc5a6" stroke="#8c6b51" strokeWidth="3" />
-              <path d="M42 117 272 39l235 78" fill="none" stroke="#694936" strokeWidth="7" strokeLinecap="round" />
-              <path d="M83 137h164v105H83z" fill="#e4d0b4" stroke="#9b795e" strokeWidth="2" />
-              <path d="M292 137h168v105H292z" fill="#eadbc4" stroke="#9b795e" strokeWidth="2" />
-              <path d="M242 243v-74a29 29 0 0 1 58 0v74" fill="#b18d6d" stroke="#79563e" strokeWidth="3" />
-              <g fill="#b7896c" stroke="#8c6b51" strokeWidth="2">
-                <rect x="102" y="151" width="25" height="31" rx="2"/><rect x="145" y="151" width="25" height="31" rx="2"/><rect x="188" y="151" width="25" height="31" rx="2"/>
-                <rect x="102" y="197" width="25" height="31" rx="2"/><rect x="145" y="197" width="25" height="31" rx="2"/><rect x="188" y="197" width="25" height="31" rx="2"/>
-                <rect x="317" y="151" width="25" height="31" rx="2"/><rect x="361" y="151" width="25" height="31" rx="2"/><rect x="404" y="151" width="25" height="31" rx="2"/>
-                <rect x="317" y="197" width="25" height="31" rx="2"/><rect x="361" y="197" width="25" height="31" rx="2"/><rect x="404" y="197" width="25" height="31" rx="2"/>
-              </g>
-              <g fill="#899047" opacity=".9"><circle cx="43" cy="182" r="20"/><circle cx="55" cy="162" r="19"/><circle cx="22" cy="162" r="17"/><circle cx="500" cy="184" r="21"/><circle cx="518" cy="163" r="20"/><circle cx="482" cy="162" r="18"/></g>
-              <g stroke="#76543b" strokeWidth="5"><path d="M42 193v42M500 195v40" /></g>
-            </svg>
+            <div className="relative w-full max-w-xl aspect-[2/1] overflow-hidden rounded-2xl border border-[#dcc7aa] bg-[#eadac5] shadow-[0_12px_30px_rgba(66,39,29,0.16)]">
+              <img
+                src="/campus-gate.png"
+                alt="Campus entrance at IIT Bhubaneswar"
+                className="h-full w-full object-cover"
+                style={{ filter: "sepia(.28) saturate(.78) contrast(.94)" }}
+              />
+              <div aria-hidden="true" className="absolute inset-0 bg-[#e8d5b8]/20 mix-blend-soft-light" />
+              <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#4b271c]/25 via-transparent to-[#f7f2e7]/10" />
+            </div>
           </div>
 
           <p className="relative z-10 mt-6 text-xs font-medium tracking-wide text-[#806951]">Chitkara Institute of Technology</p>

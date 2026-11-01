@@ -151,11 +151,11 @@ export async function sendNotification(params: {
     } else if (channel === "email") {
       const emailHtml = `
         <div style="font-family: sans-serif; padding: 20px; color: #493227;">
-          <h2 style="color: #2563eb;">vetogrid Notification</h2>
+          <h2 style="color: #2563eb;">VetoGrid Notification</h2>
           <h3 style="margin-top: 10px;">${params.title}</h3>
           <p style="font-size: 14px; line-height: 1.6;">${params.message}</p>
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #e3d4c2;" />
-          <p style="font-size: 11px; color: #75604f;">Chitkara Institute of Technology · vetogrid Automated Dispatch</p>
+          <p style="font-size: 11px; color: #75604f;">Chitkara Institute of Technology · VetoGrid Automated Dispatch</p>
         </div>
       `;
       const delivery = await deliverEmail(params.recipient, params.title, emailHtml);

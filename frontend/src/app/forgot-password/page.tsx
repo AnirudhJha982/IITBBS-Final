@@ -52,9 +52,9 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Brand */}
         <div className="text-center space-y-2">
-          <img src="/vetogrid-eagle.svg" alt="vetogrid logo" className="inline-block w-12 h-12 object-contain mb-2" />
+          <img src="/vetogrid-eagle.svg" alt="VetoGrid logo" className="inline-block w-12 h-12 object-contain mb-2" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            vetogrid
+            VetoGrid
           </h1>
           <p className="text-xs text-slate-400">
             Secure Account Recovery · Chitkara Institute of Technology
