@@ -26,7 +26,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-navy-950 text-slate-100 min-h-screen antialiased selection:bg-blue-100 selection:text-blue-900">
+      <body className="bg-navy-950 text-slate-900 min-h-screen antialiased selection:bg-blue-100 selection:text-blue-900">
         <AuthProvider>
           {children}
           <PwaRegistrar />

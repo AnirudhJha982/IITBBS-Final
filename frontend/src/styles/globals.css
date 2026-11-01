@@ -4,17 +4,15 @@
 
 :root {
   color-scheme: light;
-  --background: #F5F7FB;
-  --foreground: #172033;
-  --muted: #64748B;
-  --muted-foreground: #526173;
-  --border: #DCE3ED;
-  --ring: #3B82F6;
+  --background: #F7F2E7;
+  --foreground: #42271D;
+  --muted: #7A6656;
+  --muted-foreground: #6D5849;
+  --border: #E3D4C2;
+  --ring: #A39118;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
   background-color: var(--background);
@@ -25,41 +23,22 @@ body {
   overflow-x: hidden;
 }
 
-/* Custom scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #F3EBDD; }
+::-webkit-scrollbar-thumb { background: #C7B39B; border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover { background: #9E8065; }
+.border-subtle { border-color: rgba(84, 49, 39, 0.14); }
 
-::-webkit-scrollbar-track {
-  background: #F1F5F9;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
-}
-
-/* Subtle border utility */
-.border-subtle {
-  border-color: rgba(15, 23, 42, 0.1);
-}
-
-/* Bring the previous dark palette's pale text utilities into readable light-theme contrast. */
-.text-slate-50 { color: #172033; }
-.text-slate-100 { color: #172033; }
-.text-slate-200 { color: #243247; }
-.text-slate-300 { color: #334155; }
-.text-slate-400 { color: #526173; }
-.text-slate-500 { color: #64748B; }
-.text-blue-100, .text-blue-200, .text-blue-300, .text-blue-400 { color: #1D4ED8; }
-.text-cyan-300, .text-cyan-400 { color: #0E7490; }
-.text-emerald-200, .text-emerald-300, .text-emerald-400 { color: #047857; }
-.text-amber-200, .text-amber-300, .text-amber-400 { color: #92400E; }
-.text-rose-200, .text-rose-300, .text-rose-400 { color: #BE123C; }
-.text-purple-400, .text-violet-400 { color: #6D28D9; }
-.hover\:text-white:hover { color: #172033; }
+.text-slate-50 { color: #42271D; }
+.text-slate-100 { color: #4C3326; }
+.text-slate-200 { color: #604835; }
+.text-slate-300 { color: #725B48; }
+.text-slate-400 { color: #88725E; }
+.text-slate-500 { color: #75604F; }
+.text-blue-100, .text-blue-200, .text-blue-300, .text-blue-400 { color: #79690D; }
+.text-cyan-300, .text-cyan-400 { color: #91584C; }
+.text-emerald-200, .text-emerald-300, .text-emerald-400 { color: #596224; }
+.text-amber-200, .text-amber-300, .text-amber-400 { color: #79600D; }
+.text-rose-200, .text-rose-300, .text-rose-400 { color: #91584C; }
+.text-purple-400, .text-violet-400 { color: #74453C; }
+.hover\:text-white:hover { color: #FFFCF7; }

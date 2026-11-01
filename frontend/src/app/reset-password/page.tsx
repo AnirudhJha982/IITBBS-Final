@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Layers, Lock, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Lock, ArrowRight, ShieldCheck, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/Card";
@@ -205,9 +205,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md space-y-6 relative z-10">
         {/* Brand */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 text-blue-400 mb-2 shadow-glow">
-            <Layers className="w-7 h-7" />
-          </div>
+          <img src="/vetogrid-logo.jpg" alt="vetogrid logo" className="inline-block w-12 h-12 rounded-xl object-contain bg-[#f7f2e7] mb-2 shadow-sm" />
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             vetogrid
           </h1>

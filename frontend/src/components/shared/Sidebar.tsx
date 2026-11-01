@@ -17,7 +17,6 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Layers,
   ChevronRight,
   ShieldCheck,
 } from "lucide-react";
