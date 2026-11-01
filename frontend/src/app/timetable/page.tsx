@@ -45,12 +45,12 @@ const LUNCH_ROW_HEIGHT = 30;
 const TIMELINE_HEIGHT = GRID_ROW_HEIGHT * 9 + LUNCH_ROW_HEIGHT;
 
 const SESSION_COLORS = [
-  { card: "border-[#a4d952] bg-[#c5f26c] text-[#344a1d]", label: "bg-white/60 text-[#48622b]" },
-  { card: "border-[#e9cf45] bg-[#fff06b] text-[#514713]", label: "bg-white/60 text-[#776719]" },
-  { card: "border-[#e38385] bg-[#f59d9e] text-[#5d3034]", label: "bg-white/60 text-[#82464a]" },
-  { card: "border-[#c29be2] bg-[#d8b4f4] text-[#493260]", label: "bg-white/60 text-[#684a91]" },
-  { card: "border-[#5ec4d1] bg-[#80dfe9] text-[#174c53]", label: "bg-white/60 text-[#23637a]" },
-  { card: "border-[#74aadd] bg-[#96c6ef] text-[#23455f]", label: "bg-white/60 text-[#315f86]" },
+  { card: "border-[#c2c894] bg-[#e6e8cc] text-[#464d20]", label: "bg-white/60 text-[#596224]" },
+  { card: "border-[#ddca88] bg-[#f2e8c2] text-[#5e5015]", label: "bg-white/60 text-[#79690d]" },
+  { card: "border-[#d9aa9b] bg-[#f3e0dc] text-[#5a352e]", label: "bg-white/60 text-[#74453c]" },
+  { card: "border-[#cbb69c] bg-[#efe1cf] text-[#493227]", label: "bg-white/60 text-[#604835]" },
+  { card: "border-[#c68b7b] bg-[#f3dfd9] text-[#5a352e]", label: "bg-white/60 text-[#795047]" },
+  { card: "border-[#d6c1a8] bg-[#f2e8d9] text-[#574438]", label: "bg-white/60 text-[#75604f]" },
 ];
 
 function colorsForCourse(courseId: string) {
@@ -242,23 +242,23 @@ export default function TimetablePage() {
 
   return (
     <AppShell>
-      <Card className="overflow-hidden border-[#e3e8ef] bg-white shadow-[0_14px_40px_rgba(22,28,24,0.08)]">
-        <CardHeader className="flex flex-col gap-4 border-b border-[#e8edf3] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="overflow-hidden border-[#e3d4c2] bg-white shadow-[0_14px_40px_rgba(22,28,24,0.08)]">
+        <CardHeader className="flex flex-col gap-4 border-b border-[#e3d4c2] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-4">
-            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#18243a]">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#42271d]">
               <Calendar className="h-5 w-5 text-blue-600" />
               Scheduled Weekly Timetable ({filtered.length} matching)
             </CardTitle>
 
             {/* View Mode Toggle */}
-            <div className="inline-flex rounded-lg border border-[#dce4ee] bg-[#f8fafc] p-1">
+            <div className="inline-flex rounded-lg border border-[#e3d4c2] bg-[#faf5eb] p-1">
               <button
                 type="button"
                 onClick={() => setViewMode("table")}
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-all ${
                   viewMode === "table"
                     ? "bg-white text-blue-700 shadow-sm"
-                    : "text-[#5b6a80] hover:text-[#18243a]"
+                    : "text-[#75604f] hover:text-[#42271d]"
                 }`}
               >
                 <TableIcon className="h-3.5 w-3.5" />
@@ -270,7 +270,7 @@ export default function TimetablePage() {
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-semibold transition-all ${
                   viewMode === "grid"
                     ? "bg-white text-blue-700 shadow-sm"
-                    : "text-[#5b6a80] hover:text-[#18243a]"
+                    : "text-[#75604f] hover:text-[#42271d]"
                 }`}
               >
                 <LayoutGrid className="h-3.5 w-3.5" />
@@ -285,7 +285,7 @@ export default function TimetablePage() {
             <select
               value={departmentFilter}
               onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="h-11 min-w-[160px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm font-medium text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 min-w-[160px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-3.5 text-sm font-medium text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Departments</option>
               {departmentsList.map((dept) => (
@@ -299,7 +299,7 @@ export default function TimetablePage() {
             <select
               value={dayFilter}
               onChange={(e) => setDayFilter(e.target.value)}
-              className="h-11 min-w-[150px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 min-w-[150px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-3.5 text-sm text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Days (Mon-Fri)</option>
               {DAYS.map((d) => (
@@ -313,7 +313,7 @@ export default function TimetablePage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="h-11 min-w-[140px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 min-w-[140px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-3.5 text-sm text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Types</option>
               <option value="lecture">Lectures</option>
@@ -325,7 +325,7 @@ export default function TimetablePage() {
             <select
               value={groupFilter}
               onChange={(e) => setGroupFilter(e.target.value)}
-              className="h-11 min-w-[145px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 min-w-[145px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-3.5 text-sm text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Groups ({groupsList.length})</option>
               {groupsList.map((g) => (
@@ -339,7 +339,7 @@ export default function TimetablePage() {
             <select
               value={facultyFilter}
               onChange={(e) => setFacultyFilter(e.target.value)}
-              className="h-11 max-w-[210px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 max-w-[210px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-3.5 text-sm text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Faculty ({facultyList.length})</option>
               {facultyList.map((f) => (
@@ -353,7 +353,7 @@ export default function TimetablePage() {
             <select
               value={roomFilter}
               onChange={(e) => setRoomFilter(e.target.value)}
-              className="h-11 min-w-[140px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-3.5 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 min-w-[140px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-3.5 text-sm text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Venues ({roomsList.length})</option>
               {roomsList.map((r) => (
@@ -367,7 +367,7 @@ export default function TimetablePage() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="h-11 rounded-lg border border-[#dce4ee] bg-white px-3.5 text-xs font-semibold text-[#5b6a80] shadow-sm transition-colors hover:bg-slate-50 hover:text-[#18243a]"
+                className="h-11 rounded-lg border border-[#e3d4c2] bg-white px-3.5 text-xs font-semibold text-[#75604f] shadow-sm transition-colors hover:bg-slate-50 hover:text-[#42271d]"
               >
                 Clear All Filters
               </button>
@@ -377,7 +377,7 @@ export default function TimetablePage() {
               type="button"
               onClick={handleDownload}
               title="Download Schedule JSON"
-              className="flex h-11 items-center gap-1.5 rounded-lg border border-[#dce4ee] bg-white px-3.5 text-xs font-semibold text-[#5b6a80] shadow-sm transition-colors hover:bg-slate-50 hover:text-[#18243a]"
+              className="flex h-11 items-center gap-1.5 rounded-lg border border-[#e3d4c2] bg-white px-3.5 text-xs font-semibold text-[#75604f] shadow-sm transition-colors hover:bg-slate-50 hover:text-[#42271d]"
             >
               <Download className="h-4 w-4" />
               Export
@@ -387,12 +387,12 @@ export default function TimetablePage() {
 
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex flex-col items-center gap-3 py-16 text-[#65748a]">
+            <div className="flex flex-col items-center gap-3 py-16 text-[#88725e]">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               <p className="text-sm">Loading academic timetable…</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-[#65748a]">
+            <div className="py-12 text-center text-sm text-[#88725e]">
               No sessions found matching selected filters.
             </div>
           ) : viewMode === "table" ? (
@@ -400,7 +400,7 @@ export default function TimetablePage() {
             <div className="overflow-x-auto px-5 pb-3">
               <table className="w-full min-w-[1240px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-[#e5ebf2] bg-[#fbfcfe] text-[12px] font-semibold uppercase tracking-wide text-[#5b6a80]">
+                  <tr className="border-b border-[#e3d4c2] bg-[#fffdf8] text-[12px] font-semibold uppercase tracking-wide text-[#75604f]">
                     <th className="w-[120px] px-4 py-4">Session ID</th>
                     <th className="w-[190px] px-4 py-4">Slot (Day &amp; Period)</th>
                     <th className="w-[210px] px-4 py-4">Associated Course</th>
@@ -412,11 +412,11 @@ export default function TimetablePage() {
                     <th className="w-[140px] px-4 py-4">Class Size</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e8edf3] text-sm text-[#344157]">
+                <tbody className="divide-y divide-[#e3d4c2] text-sm text-[#604835]">
                   {filtered.map((s) => (
                     <tr
                       key={s.session_id}
-                      className="transition-colors odd:bg-white even:bg-[#f8fafd] hover:bg-blue-50/70"
+                      className="transition-colors odd:bg-white even:bg-[#faf5eb] hover:bg-blue-50/70"
                     >
                       {/* Session ID */}
                       <td className="px-4 py-4 font-mono font-bold text-blue-700">
@@ -425,31 +425,31 @@ export default function TimetablePage() {
 
                       {/* Slot (Day & Period) */}
                       <td className="whitespace-nowrap px-4 py-4">
-                        <span className="font-semibold text-[#1f2b3f]">{s.day}</span>{" "}
+                        <span className="font-semibold text-[#493227]">{s.day}</span>{" "}
                         <span
                           className={`ml-1 inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${
                             s.duration > 1
-                              ? "border-[#fed7aa] bg-[#fff7ed] text-[#b45309]"
-                              : "border-[#dbeafe] bg-[#eff6ff] text-[#1d4ed8]"
+                              ? "border-[#eac9b9] bg-[#fbf3ef] text-[#887316]"
+                              : "border-[#f3e0d9] bg-[#f8f4e8] text-[#79690d]"
                           }`}
                         >
                           P{s.start_period}
                           {s.duration > 1 ? `–P${s.end_period}` : ""} ({s.duration}h)
                         </span>
-                        <div className="mt-0.5 font-mono text-[11px] text-[#65748a]">
+                        <div className="mt-0.5 font-mono text-[11px] text-[#88725e]">
                           {formatPeriodSlot(s.start_period, s.end_period)}
                         </div>
                       </td>
 
                       {/* Associated Course */}
                       <td className="px-4 py-4">
-                        <div className="font-mono font-bold text-[#1f2b3f]">{s.course_id}</div>
-                        <div className="text-xs text-[#526077] line-clamp-1">{s.course_title}</div>
+                        <div className="font-mono font-bold text-[#493227]">{s.course_id}</div>
+                        <div className="text-xs text-[#75604f] line-clamp-1">{s.course_title}</div>
                       </td>
 
                       {/* Department */}
                       <td className="px-4 py-4">
-                        <span className="inline-flex items-center rounded-md border border-[#c7d2fe] bg-[#eef2ff] px-2.5 py-1 text-xs font-bold text-[#4338ca]">
+                        <span className="inline-flex items-center rounded-md border border-[#f3e0d9] bg-[#fbf3f0] px-2.5 py-1 text-xs font-bold text-[#79690d]">
                           {s.department || "—"}
                         </span>
                       </td>
@@ -459,10 +459,10 @@ export default function TimetablePage() {
                         <span
                           className={`inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold capitalize ${
                             s.kind === "lab"
-                              ? "border-[#e9d5ff] bg-[#faf5ff] text-[#7e22ce]"
+                              ? "border-[#f0e0dc] bg-[#fbf3f0] text-[#795047]"
                               : s.kind === "tutorial"
-                              ? "border-[#a5f3fc] bg-[#ecfeff] text-[#0e7490]"
-                              : "border-[#bfdbfe] bg-[#eff6ff] text-[#1d4ed8]"
+                              ? "border-[#d9aa9b] bg-[#fbf3f0] text-[#795047]"
+                              : "border-[#e8c6ba] bg-[#f8f4e8] text-[#79690d]"
                           }`}
                         >
                           {s.kind}
@@ -475,7 +475,7 @@ export default function TimetablePage() {
                           {(s.groups || []).map((g: string) => (
                             <span
                               key={g}
-                              className="rounded-md bg-[#f4f6f9] px-2 py-1 font-mono text-[11px] text-[#43536b]"
+                              className="rounded-md bg-[#f3e9da] px-2 py-1 font-mono text-[11px] text-[#69584a]"
                             >
                               {g}
                             </span>
@@ -485,23 +485,23 @@ export default function TimetablePage() {
 
                       {/* Faculty in Charge */}
                       <td className="px-4 py-4">
-                        <div className="font-medium text-[#27364d]">{s.faculty_name}</div>
-                        <div className="font-mono text-xs text-[#65748a]">
+                        <div className="font-medium text-[#574438]">{s.faculty_name}</div>
+                        <div className="font-mono text-xs text-[#88725e]">
                           {s.faculty_id} ({s.department})
                         </div>
                       </td>
 
                       {/* Allocated Venue */}
                       <td className="px-4 py-4">
-                        <div className="font-mono font-bold text-[#07805d]">{s.room_id}</div>
-                        <div className="text-xs text-[#65748a]">
+                        <div className="font-mono font-bold text-[#6e792f]">{s.room_id}</div>
+                        <div className="text-xs text-[#88725e]">
                           {s.room_name} ({s.building})
                         </div>
                       </td>
 
                       {/* Class Size */}
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <span className="inline-flex min-h-[40px] items-center rounded-full border border-[#a9e7d6] bg-[#e7f8f2] px-3.5 py-1 text-[13px] font-medium leading-5 text-[#087f5b]">
+                        <span className="inline-flex min-h-[40px] items-center rounded-full border border-[#d2d8a0] bg-[#f3f4e5] px-3.5 py-1 text-[13px] font-medium leading-5 text-[#596224]">
                           {s.size} students (OK)
                         </span>
                       </td>
@@ -522,13 +522,13 @@ export default function TimetablePage() {
                     Time
                   </div>
                   {sessionsByDay.map((day) => (
-                    <div key={day.code} className="rounded-xl border border-[#e8edf3] bg-[#f8fafc] px-3 py-2.5">
+                    <div key={day.code} className="rounded-xl border border-[#e3d4c2] bg-[#faf5eb] px-3 py-2.5">
                       <div className="flex items-end justify-between gap-2">
                         <div>
-                          <p className="text-xs font-semibold text-[#18243a]">{day.label}</p>
-                          <p className="text-[10px] text-[#65748a]">{day.sessions.length} sessions</p>
+                          <p className="text-xs font-semibold text-[#42271d]">{day.label}</p>
+                          <p className="text-[10px] text-[#88725e]">{day.sessions.length} sessions</p>
                         </div>
-                        <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-blue-700 shadow-sm border border-[#e8edf3]">
+                        <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] font-bold text-blue-700 shadow-sm border border-[#e3d4c2]">
                           {day.code}
                         </span>
                       </div>
@@ -548,10 +548,10 @@ export default function TimetablePage() {
                     {Array.from({ length: 9 }, (_, i) => i + 1).map((period) => (
                       <div
                         key={period}
-                        className="absolute left-0 right-0 px-1 text-right text-[11px] text-[#65748a]"
+                        className="absolute left-0 right-0 px-1 text-right text-[11px] text-[#88725e]"
                         style={{ top: `${periodTop(period)}px`, height: `${GRID_ROW_HEIGHT}px` }}
                       >
-                        <div className="font-semibold text-[#18243a]">P{period}</div>
+                        <div className="font-semibold text-[#42271d]">P{period}</div>
                         <div className="text-[10px]">{PERIOD_TIMES[period]?.start}</div>
                       </div>
                     ))}
@@ -563,7 +563,7 @@ export default function TimetablePage() {
                     return (
                       <div
                         key={day.code}
-                        className="relative rounded-xl border border-[#e8edf3] bg-white shadow-sm"
+                        className="relative rounded-xl border border-[#e3d4c2] bg-white shadow-sm"
                       >
                         {laidOut.map(({ session, lane, laneCount }) => {
                           const top = periodTop(session.start_period);

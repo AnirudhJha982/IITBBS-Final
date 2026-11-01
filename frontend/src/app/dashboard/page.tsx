@@ -817,10 +817,10 @@ export default function DashboardPage() {
 
                   <div className="flex items-center justify-between p-3 rounded-lg bg-surface-muted border border-surface-border">
                     <div className="flex items-center gap-2.5">
-                      <Layers className="w-4 h-4 text-violet-400" />
+                      <Layers className="w-4 h-4 text-rose-600" />
                       <span className="text-xs font-medium text-slate-200">Access Level</span>
                     </div>
-                    <span className="text-[11px] font-semibold text-violet-400 px-2 py-0.5 rounded bg-violet-500/10 capitalize">
+                    <span className="text-[11px] font-semibold text-rose-600 px-2 py-0.5 rounded bg-rose-500/10 capitalize">
                       {(role ?? "guest").replace("_", " ")}
                     </span>
                   </div>

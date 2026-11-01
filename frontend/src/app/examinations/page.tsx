@@ -47,9 +47,9 @@ export default function ExaminationsPage() {
 
   return (
     <AppShell>
-      <Card className="overflow-hidden border-[#e3e8ef] bg-white shadow-[0_14px_40px_rgba(22,28,24,0.08)]">
-        <CardHeader className="flex flex-col gap-4 border-b border-[#e8edf3] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#18243a]">
+      <Card className="overflow-hidden border-[#e3d4c2] bg-white shadow-[0_14px_40px_rgba(22,28,24,0.08)]">
+        <CardHeader className="flex flex-col gap-4 border-b border-[#e3d4c2] bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#42271d]">
             <GraduationCap className="h-5 w-5 text-blue-600" />
             Scheduled Midsemester Examinations ({filtered.length} matching)
           </CardTitle>
@@ -58,7 +58,7 @@ export default function ExaminationsPage() {
             <select
               value={dayFilter}
               onChange={(e) => setDayFilter(e.target.value)}
-              className="h-11 min-w-[185px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-4 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 min-w-[185px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-4 text-sm text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Days (Mon-Sat)</option>
               {days.map((d) => (
@@ -69,7 +69,7 @@ export default function ExaminationsPage() {
             <select
               value={sessionFilter}
               onChange={(e) => setSessionFilter(e.target.value)}
-              className="h-11 min-w-[235px] rounded-lg border border-[#dce4ee] bg-[#f8fafc] px-4 text-sm text-[#35445b] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="h-11 min-w-[235px] rounded-lg border border-[#e3d4c2] bg-[#faf5eb] px-4 text-sm text-[#604835] shadow-sm outline-none transition-colors focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
             >
               <option value="">All Sessions (AM & PM)</option>
               <option value="AM">Morning (AM: 09:30 - 11:30)</option>
@@ -79,19 +79,19 @@ export default function ExaminationsPage() {
         </CardHeader>
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex flex-col items-center gap-3 py-16 text-[#65748a]">
+            <div className="flex flex-col items-center gap-3 py-16 text-[#88725e]">
               <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               <p className="text-sm">Loading examination schedule…</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="py-12 text-center text-sm text-[#65748a]">
+            <div className="py-12 text-center text-sm text-[#88725e]">
               No exams found matching selected filters.
             </div>
           ) : (
             <div className="overflow-x-auto px-5 pb-3">
               <table className="w-full min-w-[1180px] border-collapse text-left">
                 <thead>
-                  <tr className="border-b border-[#e5ebf2] bg-[#fbfcfe] text-[12px] font-semibold uppercase tracking-wide text-[#5b6a80]">
+                  <tr className="border-b border-[#e3d4c2] bg-[#fffdf8] text-[12px] font-semibold uppercase tracking-wide text-[#75604f]">
                     <th className="w-[115px] px-4 py-4">Exam ID</th>
                     <th className="w-[180px] px-4 py-4">Slot (Day &amp; Session)</th>
                     <th className="w-[170px] px-4 py-4">Associated Courses</th>
@@ -101,43 +101,43 @@ export default function ExaminationsPage() {
                     <th className="w-[175px] px-4 py-4">Capacity Check</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#e8edf3] text-sm text-[#344157]">
+                <tbody className="divide-y divide-[#e3d4c2] text-sm text-[#604835]">
                   {filtered.map((e) => (
-                    <tr key={e.exam_id} className="transition-colors odd:bg-white even:bg-[#f8fafd] hover:bg-blue-50/70">
+                    <tr key={e.exam_id} className="transition-colors odd:bg-white even:bg-[#faf5eb] hover:bg-blue-50/70">
                       <td className="px-4 py-4 font-mono font-bold text-blue-700">
                         {e.exam_id}
                       </td>
                       <td className="whitespace-nowrap px-4 py-4">
-                        <span className="font-semibold text-[#1f2b3f]">{e.day}</span>{" "}
+                        <span className="font-semibold text-[#493227]">{e.day}</span>{" "}
                         <span
                           className={`ml-1 inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold ${e.session === "AM"
-                              ? "border-[#fed7aa] bg-[#fff7ed] text-[#b45309]"
-                              : "border-[#e9d5ff] bg-[#faf5ff] text-[#7e22ce]"
+                              ? "border-[#eac9b9] bg-[#fbf3ef] text-[#887316]"
+                              : "border-[#f0e0dc] bg-[#fbf3f0] text-[#795047]"
                             }`}
                         >
                           {e.session} (2h)
                         </span>
                       </td>
-                      <td className="px-4 py-4 font-mono text-[#40516a]">
+                      <td className="px-4 py-4 font-mono text-[#69584a]">
                         {(e.course_ids || []).join(", ")}
                       </td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap gap-1">
                           {(e.groups || []).map((g: string) => (
-                            <span key={g} className="rounded-md bg-[#f4f6f9] px-2 py-1 font-mono text-[11px] text-[#43536b]">
+                            <span key={g} className="rounded-md bg-[#f3e9da] px-2 py-1 font-mono text-[11px] text-[#69584a]">
                               {g}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-4 py-4 font-semibold text-[#27364d]">
+                      <td className="whitespace-nowrap px-4 py-4 font-semibold text-[#574438]">
                         {e.students_count} students
                       </td>
-                      <td className="px-4 py-4 font-mono font-bold text-[#07805d]">
+                      <td className="px-4 py-4 font-mono font-bold text-[#6e792f]">
                         {e.rooms.join(", ")}
                       </td>
                       <td className="px-4 py-4">
-                        <span className="inline-flex min-h-[44px] max-w-[155px] items-center rounded-full border border-[#a9e7d6] bg-[#e7f8f2] px-3.5 py-1.5 text-[13px] font-medium leading-5 text-[#087f5b]">
+                        <span className="inline-flex min-h-[44px] max-w-[155px] items-center rounded-full border border-[#d2d8a0] bg-[#f3f4e5] px-3.5 py-1.5 text-[13px] font-medium leading-5 text-[#596224]">
                           {e.allocated_seats_half_cap} seats (Half-Cap OK)
                         </span>
                       </td>
