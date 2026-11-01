@@ -29,6 +29,106 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: #9E8065; }
 .border-subtle { border-color: rgba(84, 49, 39, 0.14); }
 
+.vg-loading-screen {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 2rem 1.25rem;
+  color: #42271d;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(217, 170, 155, 0.16), transparent 38%),
+    linear-gradient(145deg, #fbf8f0 0%, #f7f2e7 58%, #f1e8d8 100%);
+}
+
+.vg-loading-content {
+  width: min(100%, 23rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: vg-gentle-float 3.4s ease-in-out infinite;
+}
+
+.vg-eagle-flight {
+  width: clamp(12rem, 56vw, 17rem);
+  aspect-ratio: 256 / 224;
+  filter: drop-shadow(0 1rem 1.2rem rgba(75, 39, 28, 0.14));
+  perspective: 40rem;
+}
+
+.vg-eagle-mark { display: block; width: 100%; height: 100%; overflow: visible; }
+.vg-eagle-wing { transform-box: view-box; }
+.vg-eagle-wing-left { transform-origin: 50% 48%; animation: vg-wing-flap-left 2.8s cubic-bezier(.42, 0, .38, 1) infinite; }
+.vg-eagle-wing-right { transform-origin: 50% 48%; animation: vg-wing-flap-right 2.8s cubic-bezier(.42, 0, .38, 1) infinite; }
+.vg-eagle-body { transform-box: fill-box; transform-origin: center; animation: vg-eagle-glide 3.4s ease-in-out infinite; }
+
+.vg-loading-wordmark {
+  margin: 1.05rem 0 0;
+  color: #4b271c;
+  font-size: clamp(2rem, 8vw, 2.65rem);
+  font-weight: 650;
+  letter-spacing: -0.055em;
+  line-height: 1;
+}
+
+.vg-loading-caption {
+  margin: 0.8rem 0 0;
+  color: #75604f;
+  font-size: 0.88rem;
+  letter-spacing: 0.015em;
+}
+
+.vg-loading-track {
+  width: 8.5rem;
+  height: 3px;
+  margin-top: 1.35rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(75, 39, 28, 0.12);
+}
+
+.vg-loading-progress {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #bd806c, #c69a00 55%, #4b271c);
+  animation: vg-loading-sweep 1.65s cubic-bezier(.55, .05, .35, .95) infinite;
+}
+
+@keyframes vg-wing-flap-left {
+  0%, 100% { transform: rotate(0deg); }
+  38% { transform: rotate(5deg); }
+  58% { transform: rotate(2deg); }
+}
+
+@keyframes vg-wing-flap-right {
+  0%, 100% { transform: rotate(0deg); }
+  38% { transform: rotate(-5deg); }
+  58% { transform: rotate(-2deg); }
+}
+
+@keyframes vg-eagle-glide {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.012); }
+}
+
+@keyframes vg-gentle-float {
+  0%, 100% { transform: translateY(2px); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes vg-loading-sweep {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(340%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vg-loading-content, .vg-eagle-wing-left, .vg-eagle-wing-right,
+  .vg-eagle-body, .vg-loading-progress { animation: none; }
+}
+
 .text-slate-50 { color: #42271D; }
 .text-slate-100 { color: #4C3326; }
 .text-slate-200 { color: #604835; }

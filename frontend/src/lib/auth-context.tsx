@@ -15,6 +15,7 @@ import React, {
 import { usePathname, useRouter } from "next/navigation";
 import type { AuthUser, UserRole } from "@/lib/auth";
 import { ROLE_HOME } from "@/lib/auth";
+import { VetoGridLoadingScreen } from "@/components/shared/VetoGridLoadingScreen";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -78,9 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   if (pathname !== "/login" && (isLoading || !user)) {
-    return (
-      <div className="min-h-screen bg-navy-950" aria-label="Checking session" />
-    );
+    return <VetoGridLoadingScreen />;
   }
 
   return (
