@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       await sendNotification({
         recipient: normEmail,
         category: "password_reset",
-        title: "CampusOS AI — Password Reset Request",
+        title: "vetogrid — Password Reset Request",
         message: `A password reset was requested for your Chitkara account. Use this single-use link within 15 minutes to reset your password: ${resetUrl}`,
         channels: ["email", "in_app"],
         metadata: { token_created_at: new Date().toISOString() },

@@ -12,10 +12,10 @@ export function PwaRegistrar() {
       navigator.serviceWorker
         .register("/sw.js")
         .then((reg) => {
-          console.log("CampusOS Service Worker registered with scope:", reg.scope);
+          console.log("vetogrid Service Worker registered with scope:", reg.scope);
         })
         .catch((err) => {
-          console.warn("CampusOS Service Worker registration failed:", err);
+          console.warn("vetogrid Service Worker registration failed:", err);
         });
     }
 

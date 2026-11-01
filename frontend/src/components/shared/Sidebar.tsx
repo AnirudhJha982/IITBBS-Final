@@ -139,12 +139,14 @@ export function Sidebar() {
     <aside className="fixed inset-y-0 left-0 z-40 w-64 border-r border-surface-border bg-navy-900 flex flex-col">
       {/* Brand Header */}
       <div className="h-16 flex items-center px-6 border-b border-surface-border gap-3">
-        <div className="h-8 w-8 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
-          <Layers className="w-5 h-5" />
-        </div>
+        <img
+          src="/vetogrid-logo.jpg"
+          alt="vetogrid logo"
+          className="h-9 w-9 rounded-lg object-contain bg-[#f7f6f2]"
+        />
         <div>
           <span className="font-bold text-sm tracking-tight text-slate-900 block">
-            CampusOS AI
+            vetogrid
           </span>
           <span className="text-[10px] text-slate-400 block font-medium">
             Chitkara Institute of Technology

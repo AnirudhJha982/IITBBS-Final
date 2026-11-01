@@ -19,7 +19,7 @@ export default function AssistantPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "assistant",
-      text: "Hello! I am your **CampusOS AI Assistant**. You can ask me scheduling or venue booking questions in **English** or **Hinglish**.\n\n*Examples:*\n- *'Tell me about room LH-1'* \n- *'Show schedule for Dr. F01'*\n- *'What is the solver status and violation count?'*",
+      text: "Hello! I am your **vetogrid AI Assistant**. You can ask me scheduling or venue booking questions in **English** or **Hinglish**.\n\n*Examples:*\n- *'Tell me about room LH-1'* \n- *'Show schedule for Dr. F01'*\n- *'What is the solver status and violation count?'*",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -121,7 +121,7 @@ export default function AssistantPage() {
                 <Bot className="w-4 h-4" />
               </div>
               <div>
-                <CardTitle className="text-sm">CampusOS Conversation Session</CardTitle>
+                <CardTitle className="text-sm">vetogrid Conversation Session</CardTitle>
                 <p className="text-[11px] text-slate-400">Connected to CIT Master Dataset & Schedule</p>
               </div>
             </div>

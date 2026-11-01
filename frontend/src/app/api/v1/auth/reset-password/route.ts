@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     await sendNotification({
       recipient: verification.email,
       category: "password_reset",
-      title: "CampusOS AI — Password Successfully Changed",
+      title: "vetogrid — Password Successfully Changed",
       message: "The password for your Chitkara account has been updated successfully. If you did not make this change, contact your Super Admin immediately.",
       channels: ["email", "in_app"],
     });

@@ -151,11 +151,11 @@ export async function sendNotification(params: {
     } else if (channel === "email") {
       const emailHtml = `
         <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
-          <h2 style="color: #2563eb;">CampusOS AI Notification</h2>
+          <h2 style="color: #2563eb;">vetogrid Notification</h2>
           <h3 style="margin-top: 10px;">${params.title}</h3>
           <p style="font-size: 14px; line-height: 1.6;">${params.message}</p>
           <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;" />
-          <p style="font-size: 11px; color: #64748b;">Chitkara Institute of Technology · CampusOS Automated Dispatch</p>
+          <p style="font-size: 11px; color: #64748b;">Chitkara Institute of Technology · vetogrid Automated Dispatch</p>
         </div>
       `;
       const delivery = await deliverEmail(params.recipient, params.title, emailHtml);

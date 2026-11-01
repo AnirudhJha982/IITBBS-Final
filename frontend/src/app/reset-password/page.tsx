@@ -101,7 +101,7 @@ function ResetPasswordForm() {
               className="w-full text-xs"
               onClick={() => router.push("/login")}
             >
-              Sign In to CampusOS
+              Sign In to vetogrid
               <ArrowRight className="w-4 h-4 ml-1.5" />
             </Button>
           </div>
@@ -209,7 +209,7 @@ export default function ResetPasswordPage() {
             <Layers className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            CampusOS AI
+            vetogrid
           </h1>
           <p className="text-xs text-slate-400">
             Secure Account Recovery · Chitkara Institute of Technology

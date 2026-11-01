@@ -254,7 +254,7 @@ export default function LoginPage() {
             <Layers className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            CampusOS AI
+            vetogrid
           </h1>
           <p className="text-xs text-slate-400">
             Intelligent Campus Scheduling Platform · Chitkara Institute of

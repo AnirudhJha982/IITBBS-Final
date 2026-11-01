@@ -4,14 +4,14 @@ import { AuthProvider } from "@/lib/auth-context";
 import { PwaRegistrar } from "@/components/shared/PwaRegistrar";
 
 export const metadata: Metadata = {
-  title: "CampusOS AI — Intelligent Campus Scheduling & Venue Management",
+  title: "vetogrid — Intelligent Campus Scheduling & Venue Management",
   description:
     "Next-generation AI-powered academic scheduling, automated clash-free timetable generation, and venue management platform for Chitkara Institute of Technology.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "CampusOS",
+    title: "vetogrid",
   },
 };
 

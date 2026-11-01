@@ -1097,7 +1097,7 @@ export async function POST(
       await sendNotification({
         recipient: normEmail,
         category: "password_reset",
-        title: "CampusOS AI — Password Reset Request",
+        title: "vetogrid — Password Reset Request",
         message: `Password reset requested for your account. Single-use link (15m): ${resetUrl}`,
         channels: ["email", "in_app"],
       });
@@ -1144,7 +1144,7 @@ export async function POST(
     await sendNotification({
       recipient: verification.email,
       category: "password_reset",
-      title: "CampusOS AI — Password Reset Successful",
+      title: "VetoGrid — Password Reset Successful",
       message: "Your password has been successfully updated.",
       channels: ["email", "in_app"],
     });
@@ -1352,7 +1352,7 @@ export async function POST(
     ) {
       return NextResponse.json({
         success: true,
-        reply: `**CampusOS AI Optimization Engine**: Google OR-Tools CP-SAT solver generated an **OPTIMAL** timetable with **0 hard violations** across 189 sessions, 41 exams, and 25 Spectra bookings. Soft penalty: **339**.`,
+        reply: `**VetoGrid Optimization Engine**: Google OR-Tools CP-SAT solver generated an **OPTIMAL** timetable with **0 hard violations** across 189 sessions, 41 exams, and 25 Spectra bookings. Soft penalty: **339**.`,
       });
     }
 
@@ -1366,7 +1366,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      reply: `CampusOS Assistant received: "${body.message}". All 27 venues, 40 faculty, and 189 sessions are conflict-free with **0 hard violations**. Ask me about a specific room (e.g., "LH-1"), faculty (e.g., "F12"), or solver status.`,
+      reply: `VetoGrid Assistant received: "${body.message}". All 27 venues, 40 faculty, and 189 sessions are conflict-free with **0 hard violations**. Ask me about a specific room (e.g., "LH-1"), faculty (e.g., "F12"), or solver status.`,
     });
   }
 
