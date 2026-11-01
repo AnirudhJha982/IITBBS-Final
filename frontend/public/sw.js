@@ -63,7 +63,7 @@ self.addEventListener("fetch", (event) => {
           const cached = await caches.match(event.request);
           if (cached) {
             const headers = new Headers(cached.headers);
-            headers.set("X-CampusOS-Cached", "true");
+            headers.set("X-VetoGrid-Cached", "true");
             return new Response(cached.body, {
               status: cached.status,
               statusText: cached.statusText,

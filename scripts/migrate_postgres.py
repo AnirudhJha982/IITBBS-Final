@@ -26,7 +26,7 @@ from backend.app.models.entities import (
 
 async def migrate_and_seed():
     print("=" * 70)
-    print(" CampusOS AI — PostgreSQL Database Migration & Seeding Engine")
+    print(" VetoGrid — PostgreSQL Database Migration & Seeding Engine")
     print("=" * 70)
 
     db_url = os.environ.get("DATABASE_URL", "sqlite+aiosqlite:///./campusos_local.db")

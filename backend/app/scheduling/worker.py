@@ -1,5 +1,5 @@
 """
-CampusOS AI - Production CP-SAT Solver Worker & Asynchronous Job Queue
+VetoGrid - Production CP-SAT Solver Worker & Asynchronous Job Queue
 Executes Google OR-Tools scheduling jobs asynchronously with progress updates,
 strict H1-H14 hard constraint validation, and explicit origin labeling.
 Never silently returns baseline when a live job fails.

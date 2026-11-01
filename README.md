@@ -1,6 +1,6 @@
-# CampusOS AI
+# VetoGrid
 
-CampusOS AI is a timetable and venue-management prototype for the CIT scheduling challenge. It includes the official CIT dataset, a Google OR-Tools CP-SAT scheduling engine, reference exports, and a Next.js dashboard with demo role accounts.
+VetoGrid is an intelligent academic timetable and venue-management platform for the CIT scheduling challenge. It includes the official CIT dataset, a Google OR-Tools CP-SAT scheduling engine, reference exports, and a Next.js dashboard with demo role accounts.
 
 **Live site:** [routinetable.vercel.app](https://routinetable.vercel.app)
 

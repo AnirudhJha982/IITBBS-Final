@@ -64,7 +64,7 @@ const USER_PREFERENCES: Record<string, NotificationPreference> = {
 async function deliverEmail(to: string, subject: string, htmlContent: string): Promise<{ success: boolean; provider: string; error?: string }> {
   const resendKey = process.env.RESEND_API_KEY;
   const sendgridKey = process.env.SENDGRID_API_KEY;
-  const fromEmail = process.env.NOTIFICATION_FROM_EMAIL || "notifications@campusos.chitkara.edu.in";
+  const fromEmail = process.env.NOTIFICATION_FROM_EMAIL || "notifications@vetogrid.chitkara.edu.in";
 
   if (resendKey) {
     try {
@@ -150,12 +150,12 @@ export async function sendNotification(params: {
       provider = "internal";
     } else if (channel === "email") {
       const emailHtml = `
-        <div style="font-family: sans-serif; padding: 20px; color: #1e293b;">
+        <div style="font-family: sans-serif; padding: 20px; color: #493227;">
           <h2 style="color: #2563eb;">vetogrid Notification</h2>
           <h3 style="margin-top: 10px;">${params.title}</h3>
           <p style="font-size: 14px; line-height: 1.6;">${params.message}</p>
-          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e8f0;" />
-          <p style="font-size: 11px; color: #64748b;">Chitkara Institute of Technology · vetogrid Automated Dispatch</p>
+          <hr style="margin: 20px 0; border: none; border-top: 1px solid #e3d4c2;" />
+          <p style="font-size: 11px; color: #75604f;">Chitkara Institute of Technology · vetogrid Automated Dispatch</p>
         </div>
       `;
       const delivery = await deliverEmail(params.recipient, params.title, emailHtml);
